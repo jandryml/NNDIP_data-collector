@@ -2,14 +2,24 @@
 
 // bezdratova komunikace
 #include <VirtualWire.h>
-// teplomer
+// knihovna pro AM2120 - teplomer a vlhkomer 
 #include "DHT.h"
-// nastavení čísla propojovacího pinu
+// nastavení datoveho pinu pro AM2120
 #define pinDHT 5
 // vytvoření instance senzoru z knihovny,
 // s nastavením typu DHT22, který má stejný
 // typ komunikace jako AM2120
 DHT dht(pinDHT, DHT22);
+
+// knihovna pro detektor CO2 MH-Z19
+#include "MHZ19.h"
+// nastavení datových pinů pro MH-Z19
+#define rx_pin 11
+#define tx_pin 10
+#define pwmpin 9
+// vytvoření objektů z knihovny
+MHZ19 *mhz19_uart = new MHZ19(rx_pin, tx_pin);
+MHZ19 *mhz19_pwm = new MHZ19(pwmpin);
 
 void setup()
 {
@@ -22,28 +32,57 @@ void setup()
 
   Serial.begin(9600);
 
-  // zahájení komunikace se senzorem DHT
+  // zahájení komunikace se senzorem AM2120
   dht.begin();
+
+  // zahájení komunikace se senzorem MH-Z19 přes UART
+  mhz19_uart->begin(rx_pin, tx_pin);
+  // vypnutí autokalibrace
+  mhz19_uart->setAutoCalibration(false);
 }
 
-String DHTHandle() {
+// cte hodnoty z AM2120
+String handleDHT() {
     // načtení teploty do proměnné
   float teplota = dht.readTemperature();
   // načtení vlhkosti do proměnné
   float vlhkost = dht.readHumidity();
   // kontrola, jestli jsou načtené hodnoty čísla, pomocí funkce isnan
   if (isnan(teplota) || isnan(vlhkost)) {
-    // při chybném čtení vypiš hlášku
-    return "Error: reading DHT!";
+    // při chybném čtení prazdne hodnoty
+    return ";;";
   } else {
     String result = "";
     result.concat(teplota);
     result.concat(";");
     result.concat(vlhkost);
-    result.concat(";\n");
+    result.concat(";");
 //    Serial.print(result);
     return result;
   }
+}
+
+// cte hodnoty z MH-Z19
+String handleMHZ19() {
+    // zahájení měření senzoru a načtení výsledků do proměnné
+  measurement_t m = mhz19_uart->getMeasurement();
+  int co2ppm = mhz19_pwm->getPpmPwm();
+  // vytištění naměřených údajů
+//  Serial.print("Koncentrace CO2: ");
+//  Serial.print(map(m.co2_ppm, 0, 5000, 0, 2000));
+//  Serial.print("ppm, mereni pres PWM: ");
+//  Serial.print(co2ppm);
+//  Serial.print("ppm, teplota: ");
+//  Serial.print(m.temperature);
+//  Serial.println("stC");
+  String result = "";
+  result.concat(map(m.co2_ppm, 0, 5000, 0, 2000));
+  result.concat(";");
+  result.concat(co2ppm);
+  result.concat(";");
+  result.concat(m.temperature);
+  result.concat(";\n");
+  return result;
 }
 
 void sendString(String message, bool wait)
@@ -59,11 +98,16 @@ void sendString(String message, bool wait)
 
   if (wait) vw_wait_tx(); 
   digitalWrite(13, false);
-  Serial.println("sent: " + message); 
+  Serial.print("sent: " + message); 
 }
 
 void loop()
 {
-  sendString(DHTHandle(), true); 
+  String message = "";
+  message.concat(handleDHT());
+  message.concat(handleMHZ19());
+  // sends data in this format:
+  // (float)(AM2120 - teplota); (float)(AM2120 - vlhost); (int)(MH-Z19 - UART - CO2); (int)(MH-Z19 - PWM - CO2); (int)(MH-Z19 - teplota);
+  sendString(message, true); 
   delay(1000);
 }
