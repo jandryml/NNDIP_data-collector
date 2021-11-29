@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'cz.edu.upce.fei'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1'
 sourceCompatibility = '1.8'
 
 repositories {
@@ -13,8 +13,10 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+//    implementation 'org.springframework.boot:spring-boot-starter'
+//    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    implementation 'org.usb4java:usb4java:1.3.0'
 
 //    implementation 'org.slf4j:slf4j-api:1.7.32'
 //    implementation 'org.slf4j:slf4j-simple:1.7.32'
