@@ -5,9 +5,7 @@
 
   // vytvoření proměnných pro uložení
   // přijaté zprávy a její délky,
-  // délka je maximálně 78 znaků
-  
-  
+  // délka je maximálně 78 znaků  
 
 void setup()
 {
@@ -23,7 +21,7 @@ void setup()
   vw_rx_start();
 }
 
-void readMessage()
+void processMessage()
 {
   byte messageLength = VW_MAX_MESSAGE_LEN;
   byte message[messageLength];
@@ -41,5 +39,5 @@ void readMessage()
 
 void loop()
 {
-  readMessage();
+  processMessage();
 }

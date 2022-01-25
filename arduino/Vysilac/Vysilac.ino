@@ -11,6 +11,9 @@
 // typ komunikace jako AM2120
 DHT dht(pinDHT, DHT22);
 
+// mente dle potreby, je pouzivano jako id zarizeni
+#define deviceID 1
+
 // knihovna pro detektor CO2 MH-Z19
 #include "MHZ19.h"
 // nastavení datových pinů pro MH-Z19
@@ -24,7 +27,7 @@ MHZ19 *mhz19_pwm = new MHZ19(pwmpin);
 void setup()
 {
   // nastavení typu bezdrátové komunikace
-  vw_set_ptt_inverted(true);
+  //vw_set_ptt_inverted(true);
   // nastavení čísla datového pinu pro vysílač
   vw_set_tx_pin(8);
   // nastavení rychlosti přenosu v bitech za sekundu
@@ -40,8 +43,6 @@ void setup()
   // vypnutí autokalibrace
   mhz19_uart->setAutoCalibration(false);
 }
-
-//TODO add ID of device
 
 // cte hodnoty z AM2120
 String handleDHT() {
@@ -69,21 +70,17 @@ String handleMHZ19() {
     // zahájení měření senzoru a načtení výsledků do proměnné
   measurement_t m = mhz19_uart->getMeasurement();
   int co2ppm = mhz19_pwm->getPpmPwm();
-  // vytištění naměřených údajů
-//  Serial.print("Koncentrace CO2: ");
-//  Serial.print(map(m.co2_ppm, 0, 5000, 0, 2000));
-//  Serial.print("ppm, mereni pres PWM: ");
-//  Serial.print(co2ppm);
-//  Serial.print("ppm, teplota: ");
-//  Serial.print(m.temperature);
-//  Serial.println("stC");
   String result = "";
+  // CO2 mereni
   result.concat(map(m.co2_ppm, 0, 5000, 0, 2000));
   result.concat(";");
+  // CO2 mereni pres PWM
   result.concat(co2ppm);
   result.concat(";");
+  // teplota
   result.concat(m.temperature);
   result.concat(";\n");
+//  Serial.print(result);
   return result;
 }
 
@@ -107,6 +104,8 @@ void sendString(String message, bool wait)
 void loop()
 {
   String message = "";
+  message.concat(deviceID);
+  message.concat(";");
   message.concat(handleDHT());
   message.concat(handleMHZ19());
   // sends data in this format:
