@@ -6,8 +6,8 @@
   // vytvoření proměnných pro uložení
   // přijaté zprávy a její délky,
   // délka je maximálně 78 znaků
-  byte message[VW_MAX_MESSAGE_LEN];
-  byte messageLength = VW_MAX_MESSAGE_LEN;
+  
+  
 
 void setup()
 {
@@ -25,6 +25,8 @@ void setup()
 
 void readMessage()
 {
+  byte messageLength = VW_MAX_MESSAGE_LEN;
+  byte message[messageLength];
   //
   if (vw_get_message(message, &messageLength)) // non-blocking
   {

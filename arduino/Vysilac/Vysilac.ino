@@ -41,6 +41,8 @@ void setup()
   mhz19_uart->setAutoCalibration(false);
 }
 
+//TODO add ID of device
+
 // cte hodnoty z AM2120
 String handleDHT() {
     // načtení teploty do proměnné
@@ -98,7 +100,8 @@ void sendString(String message, bool wait)
 
   if (wait) vw_wait_tx(); 
   digitalWrite(13, false);
-  Serial.print("sent: " + message); 
+  // Serial.print("sent: " + message); 
+  Serial.print(message); 
 }
 
 void loop()
