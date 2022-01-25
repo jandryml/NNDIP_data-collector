@@ -1,1 +1,0 @@
-433Mhz comm - https://timodenk.com/blog/arduino-433-mhz-wireless-module/
