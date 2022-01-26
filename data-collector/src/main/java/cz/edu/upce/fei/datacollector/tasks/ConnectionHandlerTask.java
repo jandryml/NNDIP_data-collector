@@ -35,7 +35,7 @@ public class ConnectionHandlerTask implements Runnable {
                 Thread.sleep(THREAD_SLEEP);
             }
         } catch (InterruptedException e) {
-            System.out.println("Interup");
+            System.out.println("Interrupt");
             e.printStackTrace();
         }
     }
