@@ -3,10 +3,16 @@ package cz.edu.upce.fei.datacollector.tasks;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+
 
 public class ConnectionHandlerTask implements Runnable {
+    private static final Logger logger = LogManager.getLogger();
+
     private static final int THREAD_SLEEP = 15 * 1000;
     private static final Set<String> handledPorts = new HashSet<>();
 
@@ -14,7 +20,7 @@ public class ConnectionHandlerTask implements Runnable {
     public void run() {
         try {
             while (true) {
-                System.out.println("Searching for new connection!");
+                logger.debug("Searching for new connections!");
 
                 SerialPort[] actualPorts = SerialPort.getCommPorts();
 
@@ -25,7 +31,8 @@ public class ConnectionHandlerTask implements Runnable {
                         continue;
                     }
 
-                    System.out.println("New connection! Connecting on: " + port.getPortLocation());
+                    logger.info(String.format("New connection found (%s)! Connecting on: %s\n"
+                            , port.getDescriptivePortName(), port.getPortLocation()));
 
                     port.openPort();
                     registerPortListener(port);
@@ -35,8 +42,7 @@ public class ConnectionHandlerTask implements Runnable {
                 Thread.sleep(THREAD_SLEEP);
             }
         } catch (InterruptedException e) {
-            System.out.println("Interrupt");
-            e.printStackTrace();
+            logger.error("Error in Connection handler thread!", e);
         }
     }
 
@@ -53,9 +59,9 @@ public class ConnectionHandlerTask implements Runnable {
                     byte[] newData = new byte[port.bytesAvailable()];
                     port.readBytes(newData, newData.length);
                     //TODO work with data properly
-                    System.out.print("Read: " + new String(newData).replace("\0", ""));
+                    logger.info("Read: " + new String(newData).replace("\0", ""));
                 } else if (event.getEventType() == SerialPort.LISTENING_EVENT_PORT_DISCONNECTED) {
-                    System.out.println("Disconnected port: " + port.getPortLocation());
+                    logger.info("Disconnected port: " + port.getPortLocation());
                     handledPorts.remove(port.getPortLocation());
                     port.closePort();
                 }
