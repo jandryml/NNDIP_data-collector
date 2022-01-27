@@ -1,48 +1,51 @@
-package cz.edu.upce.fei.datacollector.tasks;
+package cz.edu.upce.fei.datacollector.service;
 
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
 
 
-public class ConnectionHandlerTask implements Runnable {
-    private static final Logger logger = LogManager.getLogger();
+@EnableAsync
+@Component
+public class ConnectionHandlerTask {
+    private final Logger logger = LogManager.getLogger();
+    private final Set<String> handledPorts = new HashSet<>();
 
-    private static final int THREAD_SLEEP = 15 * 1000;
-    private static final Set<String> handledPorts = new HashSet<>();
+    private final DataHandlerTask dataHandlerTask;
 
-    @Override
+    public ConnectionHandlerTask(DataHandlerTask dataHandlerTask) {
+        this.dataHandlerTask = dataHandlerTask;
+    }
+
+    @Async
+    @Scheduled(cron = "${connectionHandlingTask}")
     public void run() {
-        try {
-            while (true) {
-                logger.debug("Searching for new connections!");
+        logger.debug("Searching for new connections!");
 
-                SerialPort[] actualPorts = SerialPort.getCommPorts();
+        SerialPort[] actualPorts = SerialPort.getCommPorts();
 
-                for (SerialPort port : actualPorts) {
-                    //TODO make "USB" configurable?
-                    if (handledPorts.contains(port.getPortLocation())
-                            || !port.getDescriptivePortName().contains("USB")) {
-                        continue;
-                    }
-
-                    logger.info(String.format("New connection found (%s)! Connecting on: %s\n"
-                            , port.getDescriptivePortName(), port.getPortLocation()));
-
-                    port.openPort();
-                    registerPortListener(port);
-                    handledPorts.add(port.getPortLocation());
-                }
-
-                Thread.sleep(THREAD_SLEEP);
+        for (SerialPort port : actualPorts) {
+            // skip port if already has registered handler or is not USB
+            //TODO make "USB" configurable?
+            if (handledPorts.contains(port.getPortLocation()) || !port.getDescriptivePortName().contains("USB")) {
+                continue;
             }
-        } catch (InterruptedException e) {
-            logger.error("Error in Connection handler thread!", e);
+
+            logger.info(String.format("New connection found (%s)! Connecting on: %s\n"
+                    , port.getDescriptivePortName(), port.getPortLocation()));
+
+            port.openPort();
+            registerPortListener(port);
+            handledPorts.add(port.getPortLocation());
         }
     }
 
