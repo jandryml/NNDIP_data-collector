@@ -61,8 +61,7 @@ public class ConnectionHandlerTask {
                 if (event.getEventType() == SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
                     byte[] newData = new byte[port.bytesAvailable()];
                     port.readBytes(newData, newData.length);
-                    //TODO work with data properly
-                    logger.info("Read: " + new String(newData).replace("\0", ""));
+                    dataHandlerTask.addData(newData);
                 } else if (event.getEventType() == SerialPort.LISTENING_EVENT_PORT_DISCONNECTED) {
                     logger.info("Disconnected port: " + port.getPortLocation());
                     handledPorts.remove(port.getPortLocation());
