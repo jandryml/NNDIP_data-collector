@@ -20,10 +20,10 @@ public class ConnectionHandlerTask {
     private final Logger logger = LogManager.getLogger();
     private final Set<String> handledPorts = new HashSet<>();
 
-    private final DataHandlerTask dataHandlerTask;
+    private final DataHandlerService dataHandlerService;
 
-    public ConnectionHandlerTask(DataHandlerTask dataHandlerTask) {
-        this.dataHandlerTask = dataHandlerTask;
+    public ConnectionHandlerTask(DataHandlerService dataHandlerService) {
+        this.dataHandlerService = dataHandlerService;
     }
 
     @Async
@@ -61,7 +61,7 @@ public class ConnectionHandlerTask {
                 if (event.getEventType() == SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
                     byte[] newData = new byte[port.bytesAvailable()];
                     port.readBytes(newData, newData.length);
-                    dataHandlerTask.addData(newData);
+                    dataHandlerService.addData(newData);
                 } else if (event.getEventType() == SerialPort.LISTENING_EVENT_PORT_DISCONNECTED) {
                     logger.info("Disconnected port: " + port.getPortLocation());
                     handledPorts.remove(port.getPortLocation());

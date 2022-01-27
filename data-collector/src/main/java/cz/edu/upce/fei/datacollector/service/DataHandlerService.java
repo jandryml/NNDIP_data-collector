@@ -10,25 +10,22 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
-public class DataHandlerTask {
+public class DataHandlerService {
     private final Logger logger = LogManager.getLogger();
 
     private final JdbcTemplate jdbcTemplate;
     private final List<String> dataBuffer = new ArrayList<>();
 
     @Autowired
-    public DataHandlerTask(JdbcTemplate jdbcTemplate) {
+    public DataHandlerService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @PostConstruct
-    public void hello() {
+    @Scheduled(cron = "${dataProcessingTask}")
+    public void handleData() {
         logger.info("hello");
 
         // Split up the array of whole names into an array of first/last names
@@ -50,46 +47,53 @@ public class DataHandlerTask {
         dataBuffer.add(message);
     }
 
-    @Scheduled(cron = "${dataProcessingTask}")
-    public void processData() {
+    public List<Data> processData() {
+        logger.info("Start of data processing.");
+
         Map<Long, List<Data>> sensorDataMap = new HashMap<>();
 
         normalizeData(sensorDataMap);
 
         List<Data> resultData = sumUpData(sensorDataMap);
 
-
+        //TODO change this behaviour
         logger.info("Result of data processing:");
         for (Data data : resultData) {
             logger.info(data);
         }
         logger.info("Data processing ended.");
+        return resultData;
     }
 
     private List<Data> sumUpData(Map<Long, List<Data>> sensorDataMap) {
+        logger.debug("Start of data summarising");
+
         List<Data> resultData = new ArrayList<>();
         sensorDataMap.forEach((key, value) -> {
-            float temperature1 = 0.0f, humidity = 0.0f;
-            int co2_1 = 0, co2_2 = 0, temperature2 = 0, hits = 0;
 
-            for (Data data : value) {
-                temperature1 += data.getTemperature1();
-                humidity += data.getHumidity();
-                co2_1 += data.getCo2_1();
-                co2_2 += data.getCo2_2();
-                temperature2 += data.getTemperature2();
-                hits++;
-            }
-            // TODO try to rewrite this magic schmuck
+            // counting average on each field
+            OptionalDouble avgTemper1 = value.stream().filter(it -> it.getTemperature1() != null)
+                    .mapToDouble(Data::getTemperature1).average();
+            OptionalDouble avgHumidity = value.stream().filter(it -> it.getHumidity() != null)
+                    .mapToDouble(Data::getHumidity).average();
+            OptionalDouble avgCo2_1 = value.stream().filter(it -> it.getCo2_1() != null)
+                    .mapToInt(Data::getCo2_1).average();
+            OptionalDouble avgCo2_2 = value.stream().filter(it -> it.getCo2_2() != null)
+                    .mapToInt(Data::getCo2_2).average();
+            OptionalDouble avgTemper2 = value.stream().filter(it -> it.getTemperature2() != null)
+                    .mapToInt(Data::getTemperature2).average();
+
+            // creating summarized Data entity for each message
             resultData.add(new Data(Long.MIN_VALUE, key,
-                    (float) (Math.round((temperature1 / hits) * 100) / 100),
-                    (float) (Math.round((humidity / hits) * 100) / 100),
-                    co2_1 / hits,
-                    co2_2 / hits,
-                    temperature2 / hits,
+                    avgTemper1.isPresent() ? avgTemper1.getAsDouble() : null,
+                    avgHumidity.isPresent() ? avgHumidity.getAsDouble() : null,
+                    avgCo2_1.isPresent() ? (int) avgCo2_1.getAsDouble() : null,
+                    avgCo2_2.isPresent() ? (int) avgCo2_2.getAsDouble() : null,
+                    avgTemper2.isPresent() ? (int) avgTemper2.getAsDouble() : null,
                     LocalDateTime.now(),
-                    hits));
+                    value.size()));
         });
+        logger.debug("Data summarising ended.");
         return resultData;
     }
 
@@ -101,15 +105,26 @@ public class DataHandlerTask {
 
             if (validateMessageFormat(message)) continue;
 
-            // that is the place where magic happen ;( ... handling empty values
-            // TODO try to rewrite this magic schmuck
-            String[] strings = message.replace(";", " ;").split(";");
-            long sensorId = Long.parseLong(strings[0].trim());
+            String[] strings = message.split(";", 7);
+            long sensorId = Long.parseLong(strings[0]);
 
+            // separating data by sensor ID
             List<Data> dataList = sensorDataMap.computeIfAbsent(sensorId, k -> new ArrayList<>());
-            dataList.add(transferMessageToData(strings, sensorId));
+            dataList.add(transferRawMessageToData(strings, sensorId));
         }
+        dataBuffer.clear();
         logger.debug("Data normalised.");
+    }
+
+    private Data transferRawMessageToData(String[] strings, long sensorId) {
+        return new Data(Long.MIN_VALUE, sensorId,
+                strings[1].isEmpty() ? null : Double.parseDouble(strings[1]),
+                strings[2].isEmpty() ? null : Double.parseDouble(strings[2]),
+                strings[3].isEmpty() ? null : Integer.parseInt(strings[3]),
+                strings[4].isEmpty() ? null : Integer.parseInt(strings[4]),
+                strings[5].isEmpty() ? null : Integer.parseInt(strings[5]),
+                // those values are not used in those record
+                null, null);
     }
 
     private boolean validateMessageFormat(String message) {
@@ -118,15 +133,5 @@ public class DataHandlerTask {
             return true;
         }
         return false;
-    }
-
-    private Data transferMessageToData(String[] strings, long sensorId) {
-        return new Data(Long.MIN_VALUE, sensorId,
-                strings[1].equals(" ") ? 0 : Float.parseFloat(strings[1].trim()),
-                strings[2].equals(" ") ? 0 : Float.parseFloat(strings[2].trim()),
-                strings[3].equals(" ") ? 0 : Integer.parseInt(strings[3].trim()),
-                strings[4].equals(" ") ? 0 : Integer.parseInt(strings[4].trim()),
-                strings[5].equals(" ") ? 0 : Integer.parseInt(strings[5].trim()),
-                null, 0);
     }
 }

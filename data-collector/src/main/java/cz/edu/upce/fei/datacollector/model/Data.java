@@ -3,17 +3,18 @@ package cz.edu.upce.fei.datacollector.model;
 import java.time.LocalDateTime;
 
 public class Data {
-    private long id;
-    private long sensorId;
-    private Float temperature1;
-    private Float humidity;
-    private Integer co2_1;
-    private Integer co2_2;
-    private Integer temperature2;
-    private LocalDateTime data_time;
-    private Integer hits;
+    // TODO remove - not needed
+    private final long id;
+    private final long sensorId;
+    private final Double temperature1;
+    private final Double humidity;
+    private final Integer co2_1;
+    private final Integer co2_2;
+    private final Integer temperature2;
+    private final LocalDateTime data_time;
+    private final Integer hits;
 
-    public Data(long id, long sensorId, Float temperature1, Float humidity, Integer co2_1, Integer co2_2, Integer temperature2, LocalDateTime data_time, Integer hits) {
+    public Data(long id, long sensorId, Double temperature1, Double humidity, Integer co2_1, Integer co2_2, Integer temperature2, LocalDateTime data_time, Integer hits) {
         this.id = id;
         this.sensorId = sensorId;
         this.temperature1 = temperature1;
@@ -25,11 +26,15 @@ public class Data {
         this.hits = hits;
     }
 
-    public Float getTemperature1() {
+    public long getSensorId() {
+        return sensorId;
+    }
+
+    public Double getTemperature1() {
         return temperature1;
     }
 
-    public Float getHumidity() {
+    public Double getHumidity() {
         return humidity;
     }
 
