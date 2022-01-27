@@ -79,7 +79,7 @@ String handleMHZ19() {
   result.concat(";");
   // teplota
   result.concat(m.temperature);
-  result.concat(";\n");
+  result.concat(";");
 //  Serial.print(result);
   return result;
 }
