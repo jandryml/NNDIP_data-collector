@@ -1,23 +1,25 @@
 package cz.edu.upce.fei.datacollector.service;
 
-import cz.edu.upce.fei.datacollector.model.Data;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import cz.edu.upce.fei.datacollector.model.SensorData;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 public class DataHandlerService {
-    private final Logger logger = LogManager.getLogger();
 
     private final JdbcTemplate jdbcTemplate;
-    private final List<String> dataBuffer = new ArrayList<>();
+    private final Collection<String> dataBuffer = Collections.synchronizedCollection(new ArrayList<>());
 
     @Autowired
     public DataHandlerService(JdbcTemplate jdbcTemplate) {
@@ -26,79 +28,101 @@ public class DataHandlerService {
 
     @Scheduled(cron = "${dataProcessingTask}")
     public void handleData() {
-        logger.info("hello");
+        List<SensorData> processedData = processData();
 
-        // Split up the array of whole names into an array of first/last names
+        processedData.stream().mapToLong(SensorData::getSensorId).forEach(value -> {
+                    int res = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM sensor WHERE id = " + value
+                            , Integer.class);
+                    if (res == 0) {
+                        // TODO change device id to generic one
+                        jdbcTemplate.execute("INSERT INTO sensor VALUES (" + value + ", 'UNKNOWN', 1)");
+                    }
+                }
+        );
 
-        // Use a Java 8 stream to print out each tuple of the list
 
-        // Uses JdbcTemplate's batchUpdate operation to bulk load data
-//
-//        jdbcTemplate.query(
-//                "SELECT id, name FROM device",
-//                (rs, rowNum) -> new Data(rs.getLong("id"), rs.getString("name"))
-//        ).forEach(customer -> logger.info(customer.toString()));
+        String sql = "INSERT INTO data (sensor_id, data_time, hits, temperature_1, humidity, co2_1, co2_2, temperature_2)"
+                + " VALUES(?,?,?,?,?,?,?,?)";
 
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                SensorData user = processedData.get(i);
+                ps.setLong(1, user.getSensorId());
+                ps.setTimestamp(2, user.getTimestamp());
+                ps.setInt(3, user.getHits());
+                ps.setObject(4, user.getTemperature1());
+                ps.setObject(5, user.getHumidity());
+                ps.setObject(6, user.getCo2_1());
+                ps.setObject(7, user.getCo2_2());
+                ps.setObject(8, user.getTemperature2());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return processedData.size();
+            }
+        });
     }
 
     public void addData(byte[] rawMessage) {
         String message = new String(rawMessage);
-        logger.debug("Data received: {}", message);
+        log.debug("Data received: {}", message);
         dataBuffer.add(message);
     }
 
-    public List<Data> processData() {
-        logger.info("Start of data processing.");
+    public List<SensorData> processData() {
+        log.info("Start of data processing.");
 
-        Map<Long, List<Data>> sensorDataMap = new HashMap<>();
+        Map<Long, List<SensorData>> sensorDataMap = new HashMap<>();
 
         normalizeData(sensorDataMap);
 
-        List<Data> resultData = sumUpData(sensorDataMap);
+        List<SensorData> resultData = sumUpData(sensorDataMap);
 
         //TODO change this behaviour
-        logger.info("Result of data processing:");
-        for (Data data : resultData) {
-            logger.info(data);
+        log.info("Result of data processing:");
+        for (SensorData sensorData : resultData) {
+            log.info("{}", sensorData);
         }
-        logger.info("Data processing ended.");
+        log.info("Data processing ended.");
         return resultData;
     }
 
-    private List<Data> sumUpData(Map<Long, List<Data>> sensorDataMap) {
-        logger.debug("Start of data summarising");
+    private List<SensorData> sumUpData(Map<Long, List<SensorData>> sensorDataMap) {
+        log.debug("Start of data summarising");
 
-        List<Data> resultData = new ArrayList<>();
+        List<SensorData> resultData = new ArrayList<>();
         sensorDataMap.forEach((key, value) -> {
 
             // counting average on each field
             OptionalDouble avgTemper1 = value.stream().filter(it -> it.getTemperature1() != null)
-                    .mapToDouble(Data::getTemperature1).average();
+                    .mapToDouble(SensorData::getTemperature1).average();
             OptionalDouble avgHumidity = value.stream().filter(it -> it.getHumidity() != null)
-                    .mapToDouble(Data::getHumidity).average();
+                    .mapToDouble(SensorData::getHumidity).average();
             OptionalDouble avgCo2_1 = value.stream().filter(it -> it.getCo2_1() != null)
-                    .mapToInt(Data::getCo2_1).average();
+                    .mapToInt(SensorData::getCo2_1).average();
             OptionalDouble avgCo2_2 = value.stream().filter(it -> it.getCo2_2() != null)
-                    .mapToInt(Data::getCo2_2).average();
+                    .mapToInt(SensorData::getCo2_2).average();
             OptionalDouble avgTemper2 = value.stream().filter(it -> it.getTemperature2() != null)
-                    .mapToInt(Data::getTemperature2).average();
+                    .mapToInt(SensorData::getTemperature2).average();
 
             // creating summarized Data entity for each message
-            resultData.add(new Data(Long.MIN_VALUE, key,
+            resultData.add(new SensorData(key, Timestamp.valueOf(LocalDateTime.now()), value.size(),
                     avgTemper1.isPresent() ? avgTemper1.getAsDouble() : null,
                     avgHumidity.isPresent() ? avgHumidity.getAsDouble() : null,
                     avgCo2_1.isPresent() ? (int) avgCo2_1.getAsDouble() : null,
                     avgCo2_2.isPresent() ? (int) avgCo2_2.getAsDouble() : null,
-                    avgTemper2.isPresent() ? (int) avgTemper2.getAsDouble() : null,
-                    LocalDateTime.now(),
-                    value.size()));
+                    avgTemper2.isPresent() ? (int) avgTemper2.getAsDouble() : null
+            ));
         });
-        logger.debug("Data summarising ended.");
+        log.debug("Data summarising ended.");
         return resultData;
     }
 
-    private void normalizeData(Map<Long, List<Data>> sensorDataMap) {
-        logger.debug("Start of data normalising");
+    private void normalizeData(Map<Long, List<SensorData>> sensorDataMap) {
+        log.debug("Start of data normalising");
         for (String message : dataBuffer) {
             // removing zero byte (end of byte array from c++)
             message = message.replace("\0", "");
@@ -109,27 +133,26 @@ public class DataHandlerService {
             long sensorId = Long.parseLong(strings[0]);
 
             // separating data by sensor ID
-            List<Data> dataList = sensorDataMap.computeIfAbsent(sensorId, k -> new ArrayList<>());
-            dataList.add(transferRawMessageToData(strings, sensorId));
+            List<SensorData> sensorDataList = sensorDataMap.computeIfAbsent(sensorId, k -> new ArrayList<>());
+            sensorDataList.add(transferRawMessageToData(strings, sensorId));
         }
         dataBuffer.clear();
-        logger.debug("Data normalised.");
+        log.debug("Data normalised.");
     }
 
-    private Data transferRawMessageToData(String[] strings, long sensorId) {
-        return new Data(Long.MIN_VALUE, sensorId,
+    private SensorData transferRawMessageToData(String[] strings, long sensorId) {
+        // hits and timestamp is unused
+        return new SensorData(sensorId, null, 0,
                 strings[1].isEmpty() ? null : Double.parseDouble(strings[1]),
                 strings[2].isEmpty() ? null : Double.parseDouble(strings[2]),
                 strings[3].isEmpty() ? null : Integer.parseInt(strings[3]),
                 strings[4].isEmpty() ? null : Integer.parseInt(strings[4]),
-                strings[5].isEmpty() ? null : Integer.parseInt(strings[5]),
-                // those values are not used in those record
-                null, null);
+                strings[5].isEmpty() ? null : Integer.parseInt(strings[5]));
     }
 
     private boolean validateMessageFormat(String message) {
         if (!message.matches("^\\d+;((-?\\d+\\.\\d{0,2})|);((\\d+\\.\\d{0,2})|);((\\d{1,4})|);((\\d{1,4})|);((-?\\d+)|);$")) {
-            logger.warn("Message doesn't matches expected format: {}", message);
+            log.warn("Message doesn't matches expected format: {}", message);
             return true;
         }
         return false;

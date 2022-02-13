@@ -3,8 +3,7 @@ package cz.edu.upce.fei.datacollector.service;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,10 +13,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 
+@Slf4j
 @EnableAsync
 @Component
 public class ConnectionHandlerTask {
-    private final Logger logger = LogManager.getLogger();
     private final Set<String> handledPorts = new HashSet<>();
 
     private final DataHandlerService dataHandlerService;
@@ -29,7 +28,7 @@ public class ConnectionHandlerTask {
     @Async
     @Scheduled(cron = "${connectionHandlingTask}")
     public void run() {
-        logger.debug("Searching for new connections!");
+        log.debug("Searching for new connections!");
 
         SerialPort[] actualPorts = SerialPort.getCommPorts();
 
@@ -40,7 +39,7 @@ public class ConnectionHandlerTask {
                 continue;
             }
 
-            logger.info(String.format("New connection found (%s)! Connecting on: %s\n"
+            log.info(String.format("New connection found (%s)! Connecting on: %s\n"
                     , port.getDescriptivePortName(), port.getPortLocation()));
 
             port.openPort();
@@ -63,7 +62,7 @@ public class ConnectionHandlerTask {
                     port.readBytes(newData, newData.length);
                     dataHandlerService.addData(newData);
                 } else if (event.getEventType() == SerialPort.LISTENING_EVENT_PORT_DISCONNECTED) {
-                    logger.info("Disconnected port: " + port.getPortLocation());
+                    log.info("Disconnected port: " + port.getPortLocation());
                     handledPorts.remove(port.getPortLocation());
                     port.closePort();
                 }

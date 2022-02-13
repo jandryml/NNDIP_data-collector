@@ -26,14 +26,14 @@ alter table sensor
 
 create table data
 (
-    sensor_id     int      not null,
-    data_time     datetime not null,
-    hits          int      null,
-    temperature_1 float    null,
-    humidity      float    null,
-    co2_1         int      null,
-    co2_2         int      null,
-    temperature_2 int      null,
+    sensor_id     int                                   not null,
+    data_time     timestamp default current_timestamp() not null on update current_timestamp(),
+    hits          int                                   null,
+    temperature_1 double                                null,
+    humidity      double                                null,
+    co2_1         int                                   null,
+    co2_2         int                                   null,
+    temperature_2 int                                   null,
     primary key (sensor_id, data_time),
     constraint data_sensor_id_fk
         foreign key (sensor_id) references sensor (id)
