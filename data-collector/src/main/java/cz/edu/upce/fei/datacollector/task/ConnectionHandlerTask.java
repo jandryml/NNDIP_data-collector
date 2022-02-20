@@ -1,8 +1,10 @@
-package cz.edu.upce.fei.datacollector.service;
+package cz.edu.upce.fei.datacollector.task;
 
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
+import cz.edu.upce.fei.datacollector.service.DataHandlerService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -16,14 +18,12 @@ import java.util.Set;
 @Slf4j
 @EnableAsync
 @Component
+@RequiredArgsConstructor
 public class ConnectionHandlerTask {
+
     private final Set<String> handledPorts = new HashSet<>();
 
     private final DataHandlerService dataHandlerService;
-
-    public ConnectionHandlerTask(DataHandlerService dataHandlerService) {
-        this.dataHandlerService = dataHandlerService;
-    }
 
     @Async
     @Scheduled(cron = "${connectionHandlingTask}")
