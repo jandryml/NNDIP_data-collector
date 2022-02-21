@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -78,11 +80,11 @@ public class DataProcessServiceImpl implements DataProcessService {
 
             // creating summarized Data entity for each message
             resultData.add(new SensorData(key, Timestamp.valueOf(LocalDateTime.now()), value.size(),
-                    avgTemper1.isPresent() ? avgTemper1.getAsDouble() : null,
-                    avgHumidity.isPresent() ? avgHumidity.getAsDouble() : null,
-                    avgCo2_1.isPresent() ? (int) avgCo2_1.getAsDouble() : null,
-                    avgCo2_2.isPresent() ? (int) avgCo2_2.getAsDouble() : null,
-                    avgTemper2.isPresent() ? (int) avgTemper2.getAsDouble() : null
+                    avgTemper1.isPresent() ? formatNumber(avgTemper1.getAsDouble()).doubleValue() : null,
+                    avgHumidity.isPresent() ? formatNumber(avgHumidity.getAsDouble()).doubleValue() : null,
+                    avgCo2_1.isPresent() ? formatNumber(avgCo2_1.getAsDouble()).intValue() : null,
+                    avgCo2_2.isPresent() ? formatNumber(avgCo2_2.getAsDouble()).intValue() : null,
+                    avgTemper2.isPresent() ? formatNumber(avgTemper2.getAsDouble()).intValue() : null
             ));
         });
         log.debug("Data summarising ended.");
@@ -119,6 +121,10 @@ public class DataProcessServiceImpl implements DataProcessService {
                 strings[3].isEmpty() ? null : Integer.parseInt(strings[3]),
                 strings[4].isEmpty() ? null : Integer.parseInt(strings[4]),
                 strings[5].isEmpty() ? null : Integer.parseInt(strings[5]));
+    }
+
+    private BigDecimal formatNumber(double number) {
+        return BigDecimal.valueOf(number).setScale(2, RoundingMode.HALF_UP);
     }
 
     private boolean validateMessageFormat(String message) {
