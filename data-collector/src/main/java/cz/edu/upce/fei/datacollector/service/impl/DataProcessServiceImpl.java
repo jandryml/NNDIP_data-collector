@@ -2,7 +2,7 @@ package cz.edu.upce.fei.datacollector.service.impl;
 
 import cz.edu.upce.fei.datacollector.model.SensorData;
 import cz.edu.upce.fei.datacollector.repository.DataRepository;
-import cz.edu.upce.fei.datacollector.service.DataHandlerService;
+import cz.edu.upce.fei.datacollector.service.DataProcessService;
 import cz.edu.upce.fei.datacollector.service.SensorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,11 +16,11 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DataHandlerServiceImpl implements DataHandlerService {
+public class DataProcessServiceImpl implements DataProcessService {
 
     private final DataRepository dataRepository;
     private final SensorService sensorService;
-    private final Collection<String> dataBuffer = Collections.synchronizedCollection(new ArrayList<>());
+    private final List<String> dataBuffer = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     @Scheduled(cron = "${dataProcessingTask}")
@@ -40,7 +40,6 @@ public class DataHandlerServiceImpl implements DataHandlerService {
         dataBuffer.add(message);
     }
 
-    // TODO change to private
     public List<SensorData> processData() {
         log.info("Start of data processing.");
 
@@ -92,20 +91,23 @@ public class DataHandlerServiceImpl implements DataHandlerService {
 
     private void normalizeData(Map<Long, List<SensorData>> sensorDataMap) {
         log.debug("Start of data normalising");
-        for (String message : dataBuffer) {
-            // removing zero byte (end of byte array from c++)
-            message = message.replace("\0", "");
 
-            if (validateMessageFormat(message)) continue;
+        synchronized (dataBuffer) {
+            dataBuffer.forEach(it -> {
+                String message = it.replace("\0", "");
 
-            String[] strings = message.split(";", 7);
-            long sensorId = Long.parseLong(strings[0]);
+                if (validateMessageFormat(message)) return;
 
-            // separating data by sensor ID
-            List<SensorData> sensorDataList = sensorDataMap.computeIfAbsent(sensorId, k -> new ArrayList<>());
-            sensorDataList.add(transferRawMessageToData(strings, sensorId));
+                String[] strings = message.split(";", 7);
+                long sensorId = Long.parseLong(strings[0]);
+
+                // separating data by sensor ID
+                List<SensorData> sensorDataList = sensorDataMap.computeIfAbsent(sensorId, k -> new ArrayList<>());
+                sensorDataList.add(transferRawMessageToData(strings, sensorId));
+            });
+            dataBuffer.clear();
         }
-        dataBuffer.clear();
+
         log.debug("Data normalised.");
     }
 

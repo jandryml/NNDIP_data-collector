@@ -3,7 +3,7 @@ package cz.edu.upce.fei.datacollector.task;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
-import cz.edu.upce.fei.datacollector.service.DataHandlerService;
+import cz.edu.upce.fei.datacollector.service.DataProcessService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -23,7 +23,7 @@ public class ConnectionHandlerTask {
 
     private final Set<String> handledPorts = new HashSet<>();
 
-    private final DataHandlerService dataHandlerService;
+    private final DataProcessService dataProcessService;
 
     @Async
     @Scheduled(cron = "${connectionHandlingTask}")
@@ -60,7 +60,7 @@ public class ConnectionHandlerTask {
                 if (event.getEventType() == SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
                     byte[] newData = new byte[port.bytesAvailable()];
                     port.readBytes(newData, newData.length);
-                    dataHandlerService.addData(newData);
+                    dataProcessService.addData(newData);
                 } else if (event.getEventType() == SerialPort.LISTENING_EVENT_PORT_DISCONNECTED) {
                     log.info("Disconnected port: " + port.getPortLocation());
                     handledPorts.remove(port.getPortLocation());
