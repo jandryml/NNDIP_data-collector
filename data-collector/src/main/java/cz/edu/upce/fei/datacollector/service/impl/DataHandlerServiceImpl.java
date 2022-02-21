@@ -1,31 +1,26 @@
 package cz.edu.upce.fei.datacollector.service.impl;
 
 import cz.edu.upce.fei.datacollector.model.SensorData;
+import cz.edu.upce.fei.datacollector.repository.DataRepository;
 import cz.edu.upce.fei.datacollector.service.DataHandlerService;
+import cz.edu.upce.fei.datacollector.service.SensorService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DataHandlerServiceImpl implements DataHandlerService {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final DataRepository dataRepository;
+    private final SensorService sensorService;
     private final Collection<String> dataBuffer = Collections.synchronizedCollection(new ArrayList<>());
-
-    @Autowired
-    public DataHandlerServiceImpl(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     @Scheduled(cron = "${dataProcessingTask}")
@@ -33,40 +28,9 @@ public class DataHandlerServiceImpl implements DataHandlerService {
         List<SensorData> processedData = processData();
 
         // create new sensor if not existing;
-        processedData.stream().mapToLong(SensorData::getSensorId).forEach(value -> {
-                    int res = jdbcTemplate.queryForObject(
-                            "SELECT COUNT(*) FROM sensor WHERE id = " + value
-                            , Integer.class);
-                    if (res == 0) {
-                        // TODO change device id to generic one
-                        jdbcTemplate.execute("INSERT INTO sensor VALUES (" + value + ", 'UNKNOWN', 1)");
-                    }
-                }
-        );
+        sensorService.validateSensorsExistOrCreate(processedData);
 
-
-        String sql = "INSERT INTO data (sensor_id, data_time, hits, temperature_1, humidity, co2_1, co2_2, temperature_2)"
-                + " VALUES(?,?,?,?,?,?,?,?)";
-
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                SensorData user = processedData.get(i);
-                ps.setLong(1, user.getSensorId());
-                ps.setTimestamp(2, user.getTimestamp());
-                ps.setInt(3, user.getHits());
-                ps.setObject(4, user.getTemperature1());
-                ps.setObject(5, user.getHumidity());
-                ps.setObject(6, user.getCo2_1());
-                ps.setObject(7, user.getCo2_2());
-                ps.setObject(8, user.getTemperature2());
-            }
-
-            @Override
-            public int getBatchSize() {
-                return processedData.size();
-            }
-        });
+        dataRepository.saveData(processedData);
     }
 
     @Override

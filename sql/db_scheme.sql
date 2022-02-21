@@ -1,6 +1,6 @@
 create table device
 (
-    id   int auto_increment,
+    id   int,
     name varchar(255) default 'UNKNOWN' null,
     constraint device_id_uindex
         unique (id)
@@ -11,7 +11,7 @@ alter table device
 
 create table sensor
 (
-    id        int auto_increment,
+    id        int,
     name      varchar(255) null,
     device_id int          null,
     constraint sensor_id_uindex

@@ -1,12 +1,10 @@
 package cz.edu.upce.fei.datacollector.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.sql.Timestamp;
 
 @Data
-@AllArgsConstructor
 public class SensorData {
     private final long sensorId;
     private final Timestamp timestamp;
