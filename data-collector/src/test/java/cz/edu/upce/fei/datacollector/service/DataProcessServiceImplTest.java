@@ -1,7 +1,6 @@
 package cz.edu.upce.fei.datacollector.service;
 
 import cz.edu.upce.fei.datacollector.model.SensorData;
-import cz.edu.upce.fei.datacollector.service.impl.DataProcessServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,9 @@ import java.util.Objects;
 class DataProcessServiceImplTest {
 
     @Autowired
-    DataProcessServiceImpl dataProcessServiceImpl;
+    private DataProcessService dataProcessServiceImpl;
+    @Autowired
+    private DataReactionService reactionService;
 
     @Test
     void noData() {
@@ -34,6 +35,7 @@ class DataProcessServiceImplTest {
         assertDataRecord(result, 1, 0.0, 15.0, 15, 15, 15, 2);
         assertDataRecord(result, 2, 30.0, 30.0, 30, 30, 30, 1);
         assertDataRecord(result, 3, 40.0, 40.0, 40, 40, 40, 1);
+        reactionService.handleData(result);
     }
 
     @Test
@@ -85,6 +87,7 @@ class DataProcessServiceImplTest {
         List<SensorData> result = dataProcessServiceImpl.processData();
         assertDataRecord(result, 1, null, null, 15, 15, 15, 3);
         assertDataRecord(result, 2, 15.0, 15.0, null, null, null, 3);
+        reactionService.handleData(result);
     }
 
     private void assertDataRecord(List<SensorData> data, long exSensorId, Double exTemper1, Double exHumidity, Integer exCo2_1, Integer exCo2_2, Integer exTemper2, Integer hits) {

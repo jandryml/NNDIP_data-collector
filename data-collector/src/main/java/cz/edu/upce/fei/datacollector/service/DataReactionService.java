@@ -5,12 +5,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.List;
 
-public interface DataProcessService {
+public interface DataReactionService {
 
-    @Scheduled(cron = "${dataProcessingTask}")
-    void handleData();
+    @Scheduled(cron = "${limitValuesFetch}")
+    void fetchLimitValues();
 
-    void addData(byte[] rawMessage);
-
-    List<SensorData> processData();
+    void handleData(List<SensorData> dataList);
 }

@@ -40,4 +40,28 @@ create table data
             on update cascade on delete cascade
 );
 
-insert into device values (1, 'Default');
+insert into device
+values (1, 'Default');
+
+create table limit_values
+(
+    id              int auto_increment,
+    name            varchar(255)  default 'Default'             null,
+    description     varchar(1024) default 'Default description' null,
+    temperature_max double                                      null,
+    temperature_min double                                      null,
+    humidity_max    int                                         null,
+    humidity_min    int                                         null,
+    co2_max         int                                         null,
+    co2_min         int                                         null,
+    sensor_id       int                                         null,
+    is_global       tinyint(1)    default 0                     null,
+    constraint cc_id_uindex
+        unique (id),
+    constraint cc_sensor_id_fk
+        foreign key (sensor_id) references sensor (id)
+);
+
+alter table control_config
+    add primary key (id);
+

@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PreDestroy;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,6 +25,14 @@ public class ConnectionHandlerTask {
     private final Set<String> handledPorts = new HashSet<>();
 
     private final DataProcessService dataProcessService;
+
+    @PreDestroy
+    public void preDestroy() {
+        log.info("Trying to clear Connection service");
+//        for (handledPorts)
+//            handledPort.removeDataListener();
+//            handledPort.close();
+    }
 
     @Async
     @Scheduled(cron = "${connectionHandlingTask}")
