@@ -22,6 +22,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.2'
 
     implementation 'com.fazecast:jSerialComm:2.8.2'
+    implementation files('libs/EasyModbusJava.jar')
 
     implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
 
