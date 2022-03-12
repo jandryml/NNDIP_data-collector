@@ -1,3 +1,5 @@
+use thesis;
+
 create table device
 (
     id   int,
@@ -62,6 +64,24 @@ create table limit_values
         foreign key (sensor_id) references sensor (id)
 );
 
+create table user
+(
+    id                  binary(255)  not null
+        primary key,
+    hashed_password     varchar(255) null,
+    name                varchar(255) null,
+    profile_picture_url longtext     null,
+    username            varchar(255) null
+);
+
+create table user_roles
+(
+    user_id binary(255) not null,
+    roles   int         null,
+    constraint roles_user_fk
+        foreign key (user_id) references user (id)
+);
+
+
 alter table control_config
     add primary key (id);
-
