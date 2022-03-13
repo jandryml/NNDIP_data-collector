@@ -1,0 +1,45 @@
+# DB properties
+spring:
+  datasource:
+    url: "jdbc:mysql://localhost:3306/thesis"
+    username: "root"
+    password: "password"
+    driver-class-name: org.mariadb.jdbc.Driver
+
+# Scheduling properties
+connectionHandlingTask: "*/15 * * * * ?"
+dataProcessingTask: "0 */1 * * * ?"
+limitValuesFetch: "0 */5 * * * ?"
+
+# Reaction on measured values configuration
+reaction:
+  defaultLimits:
+    name: "Default limit values config"
+
+    temperatureMax:
+      name: "Max temperature"
+      value: 20
+      action:
+        pin: 10
+        registerType: INTEGER
+        value: 1
+
+    temperatureMin:
+      name: "Min temperature"
+
+    humidityMax:
+      name: "Max humidity"
+      value: 20
+      action:
+        pin: 9
+        registerType: BOOLEAN
+        value: 1
+
+    humidityMin:
+      name: "Min humidity"
+
+    co2Max:
+      name: "Max Co2"
+
+    co2Min:
+      name: "Min Co2"

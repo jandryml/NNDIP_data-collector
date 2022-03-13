@@ -1,6 +1,8 @@
-package cz.edu.upce.fei.datacollector.service;
+package cz.edu.upce.fei.datacollector.service.impl;
 
 import cz.edu.upce.fei.datacollector.model.SensorData;
+import cz.edu.upce.fei.datacollector.service.DataProcessService;
+import cz.edu.upce.fei.datacollector.service.DataReactionService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
