@@ -23,7 +23,7 @@ public class SensorRepositoryImpl implements SensorRepository {
 
     @Override
     public void createSensor(Sensor sensor) {
-        String sql = "INSERT INTO sensor VALUES (?,?,?)";
+        String sql = "INSERT INTO sensor (id, name, device_id) VALUES (?,?,?)";
         jdbcTemplate.execute(sql, (PreparedStatementCallback<Sensor>) ps -> {
             ps.setLong(1, sensor.getId());
             ps.setString(2, sensor.getName());

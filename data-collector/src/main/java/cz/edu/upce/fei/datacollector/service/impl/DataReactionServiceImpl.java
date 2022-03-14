@@ -129,6 +129,6 @@ public class DataReactionServiceImpl implements DataReactionService {
     }
 
     private boolean isLimitConfigured(LimitValue limitValue) {
-        return limitValue != null && limitValue.getValue() != null && limitValue.getAction() != null;
+        return limitValue != null && limitValue.getValue() != null && limitValue.getActionList() != null;
     }
 }
