@@ -27,11 +27,11 @@ reaction:
       value: 20
       actionList:
         -
-          pin: 10
+          pin: 1
           registerType: INTEGER
           value: 1
         -
-          pin: 9
+          pin: 2
           registerType: INTEGER
           value: 12
 
@@ -43,7 +43,7 @@ reaction:
       value: 20
       actionList:
         -
-          pin: 9
+          pin: 3
           registerType: BOOLEAN
           value: 1
 
@@ -52,6 +52,16 @@ reaction:
 
     co2Max:
       name: "Max Co2"
+      value: 20
+      actionList:
+        -
+          pin: 4
+          registerType: BOOLEAN
+          value: 1
+        -
+          pin: 5
+          registerType: INTEGER
+          value: 42
 
     co2Min:
       name: "Min Co2"

@@ -5,6 +5,7 @@ import cz.edu.upce.fei.datacollector.model.LimitValue;
 import cz.edu.upce.fei.datacollector.model.LimitValuesConfig;
 import cz.edu.upce.fei.datacollector.model.SensorData;
 import cz.edu.upce.fei.datacollector.service.DataReactionService;
+import cz.edu.upce.fei.datacollector.service.ModbusCommService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,6 +25,7 @@ public class DataReactionServiceImpl implements DataReactionService {
     private LimitValuesConfig defaultLimitConfig;
     private Map<Long, LimitValuesConfig> sensorsLimitValuesMap;
 
+    private final ModbusCommService modbusCommService;
 
     @PostConstruct
     public void initSetup() {
@@ -65,8 +67,10 @@ public class DataReactionServiceImpl implements DataReactionService {
         if (fetchedValue != null) {
             if (isLimitConfigured(limitConfig.getTemperatureMax()) && fetchedValue > limitConfig.getTemperatureMax().getValue()) {
                 log.info("Sensor {}: temperature too high", sensorData.getSensorId());
+                modbusCommService.handleLimit(limitConfig.getTemperatureMax());
             } else if (isLimitConfigured(limitConfig.getTemperatureMin()) && fetchedValue < limitConfig.getTemperatureMin().getValue()) {
                 log.info("Sensor {}: temperature too low", sensorData.getSensorId());
+                modbusCommService.handleLimit(limitConfig.getTemperatureMin());
                 //TODO remove later, wont be used
             } else {
                 log.info("Sensor {}: temperature is OK", sensorData.getSensorId());
@@ -81,8 +85,10 @@ public class DataReactionServiceImpl implements DataReactionService {
         if (fetchedValue != null) {
             if (isLimitConfigured(limitConfig.getCo2Max()) && fetchedValue > limitConfig.getCo2Max().getValue()) {
                 log.info("Sensor {}: co2 too high", sensorData.getSensorId());
+                modbusCommService.handleLimit(limitConfig.getCo2Max());
             } else if (isLimitConfigured(limitConfig.getCo2Min()) && fetchedValue < limitConfig.getCo2Min().getValue()) {
                 log.info("Sensor {}: co2 too low", sensorData.getSensorId());
+                modbusCommService.handleLimit(limitConfig.getCo2Min());
                 //TODO remove later, wont be used
             } else {
                 log.info("Sensor {}: co2 is OK", sensorData.getSensorId());
@@ -97,8 +103,10 @@ public class DataReactionServiceImpl implements DataReactionService {
         if (fetchedValue != null) {
             if (isLimitConfigured(limitConfig.getHumidityMax()) && fetchedValue > limitConfig.getHumidityMax().getValue()) {
                 log.info("Sensor {}: humidity too high", sensorData.getSensorId());
+                modbusCommService.handleLimit(limitConfig.getHumidityMax());
             } else if (isLimitConfigured(limitConfig.getHumidityMin()) && fetchedValue < limitConfig.getHumidityMin().getValue()) {
                 log.info("Sensor {}: humidity too low", sensorData.getSensorId());
+                modbusCommService.handleLimit(limitConfig.getHumidityMin());
                 //TODO remove later, wont be used
             } else {
                 log.info("Sensor {}: humidity is OK", sensorData.getSensorId());
