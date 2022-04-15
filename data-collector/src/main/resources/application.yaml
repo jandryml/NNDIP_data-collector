@@ -2,56 +2,13 @@
 # DB properties
 spring:
   datasource:
-    url: "jdbc:mysql://localhost:3306/thesis"
+    url: "jdbc:mysql://localhost:3306/comm-testing-old"
     username: "root"
     password: "password"
     driver-class-name: org.mariadb.jdbc.Driver
 
 # ModBus client configuration
-modbus:
-  url: 127.0.0.1
-  port: 502
 
 # Scheduling properties
 connectionHandlingTask: "*/15 * * * * ?"
 dataProcessingTask: "0 */1 * * * ?"
-limitValuesFetch: "0 */5 * * * ?"
-
-# Reaction on measured values configuration
-reaction:
-  defaultLimits:
-    name: "Default limit values config"
-
-    temperatureMax:
-      name: "Max temperature"
-      value: 20
-      actionList:
-        -
-          pin: 10
-          registerType: INTEGER
-          value: 1
-        -
-          pin: 9
-          registerType: INTEGER
-          value: 12
-
-    temperatureMin:
-      name: "Min temperature"
-
-    humidityMax:
-      name: "Max humidity"
-      value: 20
-      actionList:
-        -
-          pin: 9
-          registerType: BOOLEAN
-          value: 1
-
-    humidityMin:
-      name: "Min humidity"
-
-    co2Max:
-      name: "Max Co2"
-
-    co2Min:
-      name: "Min Co2"

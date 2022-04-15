@@ -3,7 +3,6 @@ package cz.edu.upce.fei.datacollector.service.impl;
 import cz.edu.upce.fei.datacollector.model.SensorData;
 import cz.edu.upce.fei.datacollector.repository.DataRepository;
 import cz.edu.upce.fei.datacollector.service.DataProcessService;
-import cz.edu.upce.fei.datacollector.service.DataReactionService;
 import cz.edu.upce.fei.datacollector.service.SensorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,6 @@ public class DataProcessServiceImpl implements DataProcessService {
 
     private final DataRepository dataRepository;
     private final SensorService sensorService;
-    private final DataReactionService reactionService;
 
     private final List<String> dataBuffer = Collections.synchronizedList(new ArrayList<>());
 
@@ -36,8 +34,6 @@ public class DataProcessServiceImpl implements DataProcessService {
         sensorService.validateSensorsExistOrCreate(processedData);
 
         dataRepository.saveData(processedData);
-
-        reactionService.handleData(processedData);
     }
 
     @Override
