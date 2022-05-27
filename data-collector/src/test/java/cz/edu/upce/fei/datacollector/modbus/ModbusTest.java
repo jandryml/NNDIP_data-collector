@@ -9,7 +9,7 @@ import java.io.IOException;
 public class ModbusTest {
 
     @Test
-    void connectionTest() {
+    void connectionTCPTest() {
         // TODO extract to application properties
         ModbusClient modbusClient = new ModbusClient("127.0.0.1", 502);
 
@@ -25,6 +25,18 @@ public class ModbusTest {
 
             modbusClient.Disconnect();
         } catch (IOException | ModbusException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void connectionRTUTest() {
+        ModbusClient modbusClient = new ModbusClient();
+        try {
+            modbusClient.Connect("COM12");
+            modbusClient.WriteSingleCoil(1, true);
+            modbusClient.WriteSingleRegister(1, 420);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

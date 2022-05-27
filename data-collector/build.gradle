@@ -10,6 +10,13 @@ sourceCompatibility = '1.8'
 
 repositories {
     mavenCentral()
+
+    maven {
+        url "https://maven.mangoautomation.net/repository/ias-snapshot/"
+    }
+    maven {
+        url "https://maven.mangoautomation.net/repository/ias-release/"
+    }
 }
 
 dependencies {
@@ -23,6 +30,11 @@ dependencies {
 
     implementation 'com.fazecast:jSerialComm:2.8.2'
     implementation files('libs/EasyModbusJava.jar')
+
+    implementation 'com.infiniteautomation:modbus4j:3.0.3'
+    implementation 'com.fazecast:jSerialComm:[2.0.0,3.0.0)'
+    // gnu lib
+    implementation 'org.openmuc:jrxtx:1.0.1'
 
     implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
 
