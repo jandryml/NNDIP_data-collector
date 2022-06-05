@@ -23,7 +23,8 @@ void setup() {
 
     Serial.println("SimpleRxAckPayload Starting");
     radio.begin();
-    radio.setDataRate( RF24_250KBPS );
+    radio.setDataRate( RF24_2MBPS );
+    radio.setChannel(125);
     radio.openReadingPipe(1, address);
 
     radio.enableAckPayload();

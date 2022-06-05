@@ -1,11 +1,3 @@
-/*
-  Arduino Wireless Network - Multiple NRF24L01 Tutorial
- == Example 01 - Servo Control / Node 00 - Potentiometer ==
-  by Dejan, www.HowToMechatronics.com
-  Libraries:
-  nRF24/RF24, https://github.com/nRF24/RF24
-  nRF24/RF24Network, https://github.com/nRF24/RF24Network
-*/
 #include <RF24.h>
 #include <nRF24L01.h>
 #include <SPI.h>
@@ -36,7 +28,8 @@ void setup() {
     Serial.println("SimpleTxAckPayload Starting");
 
     radio.begin();
-    radio.setDataRate( RF24_250KBPS );
+    radio.setDataRate( RF24_2MBPS );
+    radio.setChannel(125);
 
     radio.enableAckPayload();
 
