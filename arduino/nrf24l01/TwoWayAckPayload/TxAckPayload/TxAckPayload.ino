@@ -17,6 +17,14 @@ int ackData[2] = {0, 0}; // to hold the two values coming from the slave
 int ackData2[2] = {0, 0};
 bool newData = false;
 
+struct {
+  float teplota;
+  float vlhkost;
+  int co2ppm;
+  int co2ppm2;
+  int teplota2;
+} dataStruct;
+
 unsigned long currentMillis;
 unsigned long prevMillis;
 unsigned long txIntervalMillis = 2000; // send once per second
@@ -63,7 +71,7 @@ void send(byte address []) {
     Serial.println();
     if (rslt) {
         if ( radio.isAckPayloadAvailable() ) {
-            radio.read(&ackData, sizeof(ackData));
+            radio.read(&dataStruct, sizeof(dataStruct));
             newData = true;
             showData();
         }
@@ -84,10 +92,16 @@ void send(byte address []) {
 
 void showData() {
     if (newData == true) {
-        Serial.print("  Acknowledge data ");
-        Serial.print(ackData[0]);
-        Serial.print(", ");
-        Serial.println(ackData[1]);
+        Serial.print("  Acknowledge data teplota:");
+        Serial.print(dataStruct.teplota);
+        Serial.print("; vhlkost: ");
+        Serial.print(dataStruct.vlhkost);
+        Serial.print("; co2ppm: ");
+        Serial.print(dataStruct.co2ppm);
+        Serial.print("; co2ppm2: ");
+        Serial.print(dataStruct.co2ppm2);
+        Serial.print("; teplota2: ");
+        Serial.print(dataStruct.teplota2);
         Serial.println();
         newData = false;
     }
