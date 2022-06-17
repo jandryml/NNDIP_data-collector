@@ -1,5 +1,12 @@
 // SimpleRxAckPayload- the slave or the receiver
 
+// Configured for node with id 1
+// Make adjustments on those lines: 
+// #define deviceID 1 
+// const byte address[6] = {'0','0','0','0','1'};
+//         if(message == 1) {
+
+
 // knihovny pro nrf24l01
 //================
 #include <RF24.h>
@@ -27,7 +34,7 @@
 RF24 radio(CE_PIN, CSN_PIN); // nRF24L01 (CE,CSN)
 
 const byte address[6] = {'0','0','0','0','1'};   // Address of this node
-char dataReceived[10]; // this must match dataToSend in the TX
+int message; // this must match dataToSend in the TX
 bool newData = false;
 int ackData[2] = {1, -1}; // the two values to be sent to the master
 struct {
@@ -88,9 +95,14 @@ void loop() {
 //================
 void getData() {
     if ( radio.available() ) {
-        radio.read( &dataReceived, sizeof(dataReceived) );
+        radio.read( &message, sizeof(message) );
+        if(message == 1) {
+           Serial.println("Corr");
+      
         updateReplyData();
         newData = true;
+        Serial.println("Really sending data");
+        }
     }
 }
 
@@ -145,7 +157,7 @@ void handleMHZ19() {
 //================
 void showData() {
         Serial.print("Data received ");
-        Serial.println(dataReceived);
+        Serial.println(message);
         printSensorData();
 }
 
@@ -172,4 +184,5 @@ void cleanData() {
   dataStruct.co2ppm2 = 0;
   dataStruct.teplota2 = 0;
   newData = false;
+  message = 0;
 }
