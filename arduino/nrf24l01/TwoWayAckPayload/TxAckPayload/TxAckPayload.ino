@@ -24,13 +24,13 @@ struct {
 
 unsigned long currentMillis;
 unsigned long prevMillis;
-unsigned long txIntervalMillis = 5000; // send once per 5 second
+unsigned long txIntervalMillis = 5000; // send once per second
 
 //===============
 
 void setup() {
     Serial.begin(9600);
-    Serial.println("SimpleTxAckPayload Starting");
+    // Serial.println("SimpleTxAckPayload Starting");
 
     radio.begin();
     radio.setDataRate( RF24_2MBPS );
@@ -49,6 +49,7 @@ radio.openWritingPipe(secondNode);
     if (currentMillis - prevMillis >= txIntervalMillis) {
         updateMessage(1);
         send(firstNode);
+        delay(100);
         updateMessage(2);
         send(secondNode);
     }
@@ -63,9 +64,9 @@ void send(byte address []) {
         // Always use sizeof() as it gives the size as the number of bytes.
         // For example if dataToSend was an int sizeof() would correctly return 2
 
-    Serial.print("Data Sent ");
-    Serial.print(slaveId);
-    Serial.println();
+    // Serial.print("Data Sent ");
+    // Serial.print(slaveId);
+    // Serial.println();
     if (rslt) {
         if ( radio.isAckPayloadAvailable() ) {
             radio.read(&dataStruct, sizeof(dataStruct));
@@ -73,34 +74,62 @@ void send(byte address []) {
             showData();
         }
         else {
-            Serial.println("  Acknowledge but no data ");
+            // Serial.println("  Acknowledge but no data ");
         }
         
     }
     else {
-        Serial.println("  Tx failed");
+        // Serial.println("  Tx failed");
     }
 
     prevMillis = millis();
  }
 
 
+String handleThisShit() {
+  String result = "";
+
+  if (dataStruct.teplota == 0 && dataStruct.vlhkost == 0) {
+    result.concat(";;");
+  } else {
+  result.concat(dataStruct.teplota);
+  result.concat(";");
+
+  result.concat(dataStruct.vlhkost);
+  result.concat(";");
+  }
+  return result;
+}
+
+String handleThatShit() {
+  String result = "";
+  
+  if (dataStruct.co2ppm == 0 && dataStruct.co2ppm2 == 0 && dataStruct.teplota2 == 0) {
+    result.concat(";;;");
+  } else {
+  result.concat(dataStruct.co2ppm);
+  result.concat(";");
+
+  result.concat(dataStruct.co2ppm2);
+  result.concat(";");
+
+  result.concat(dataStruct.teplota2);
+  result.concat(";");
+  }
+  return result;
+}
+
+
 //=================
 
 void showData() {
     if (newData == true) {
-        Serial.print("  Acknowledge data teplota:");
-        Serial.print(dataStruct.teplota);
-        Serial.print("; vhlkost: ");
-        Serial.print(dataStruct.vlhkost);
-        Serial.print("; co2ppm: ");
-        Serial.print(dataStruct.co2ppm);
-        Serial.print("; co2ppm2: ");
-        Serial.print(dataStruct.co2ppm2);
-        Serial.print("; teplota2: ");
-        Serial.print(dataStruct.teplota2);
-        Serial.println();
-        newData = false;
+       // (float)(AM2120 - teplota); (float)(AM2120 - vlhost); (int)(MH-Z19 - UART - CO2); (int)(MH-Z19 - PWM - CO2); (int)(MH-Z19 - teplota);
+      String message = "1;";
+      message.concat(handleThisShit());
+      message.concat(handleThatShit());
+      Serial.println(message);
+      newData = false;
     }
 }
 
