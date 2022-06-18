@@ -24,12 +24,10 @@ public class DataReactionServiceImpl implements DataReactionService {
     private LimitValuesConfig defaultLimitConfig;
     private Map<Long, LimitValuesConfig> sensorsLimitValuesMap;
 
-
     @PostConstruct
     public void initSetup() {
         fetchLimitValues();
     }
-
 
     @Override
     @Scheduled(cron = "${limitValuesFetch}")
@@ -61,7 +59,7 @@ public class DataReactionServiceImpl implements DataReactionService {
     }
 
     private void handleTemperature(SensorData sensorData, LimitValuesConfig limitConfig) {
-        Double fetchedValue = getAvailableTemperature(sensorData);
+        Double fetchedValue = sensorData.getTemperature();
         if (fetchedValue != null) {
             if (isLimitConfigured(limitConfig.getTemperatureMax()) && fetchedValue > limitConfig.getTemperatureMax().getValue()) {
                 log.info("Sensor {}: temperature too high", sensorData.getSensorId());
@@ -77,7 +75,7 @@ public class DataReactionServiceImpl implements DataReactionService {
     }
 
     private void handleCo2(SensorData sensorData, LimitValuesConfig limitConfig) {
-        Integer fetchedValue = getAvailableCo2(sensorData);
+        Integer fetchedValue = sensorData.getCo2();
         if (fetchedValue != null) {
             if (isLimitConfigured(limitConfig.getCo2Max()) && fetchedValue > limitConfig.getCo2Max().getValue()) {
                 log.info("Sensor {}: co2 too high", sensorData.getSensorId());
@@ -105,26 +103,6 @@ public class DataReactionServiceImpl implements DataReactionService {
             }
         } else {
             log.info("Sensor {}: humidity not available", sensorData.getSensorId());
-        }
-    }
-
-    private Double getAvailableTemperature(SensorData sensorData) {
-        if (sensorData.getTemperature1() != null) {
-            return sensorData.getTemperature1();
-        } else if (sensorData.getTemperature2() != null) {
-            return sensorData.getTemperature2().doubleValue();
-        } else {
-            return null;
-        }
-    }
-
-    private Integer getAvailableCo2(SensorData sensorData) {
-        if (sensorData.getCo2_1() != null) {
-            return sensorData.getCo2_1();
-        } else if (sensorData.getCo2_2() != null) {
-            return sensorData.getCo2_2();
-        } else {
-            return null;
         }
     }
 

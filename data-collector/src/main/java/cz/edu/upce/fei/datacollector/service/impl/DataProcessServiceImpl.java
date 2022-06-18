@@ -66,52 +66,22 @@ public class DataProcessServiceImpl implements DataProcessService {
         return resultData;
     }
 
-    private List<SensorData> sumUpData(Map<Long, List<SensorData>> sensorDataMap) {
-        log.debug("Start of data summarising");
-
-        List<SensorData> resultData = new ArrayList<>();
-        sensorDataMap.forEach((key, value) -> {
-
-            // counting average on each field
-            OptionalDouble avgTemper1 = value.stream().filter(it -> it.getTemperature1() != null)
-                    .mapToDouble(SensorData::getTemperature1).average();
-            OptionalDouble avgHumidity = value.stream().filter(it -> it.getHumidity() != null)
-                    .mapToDouble(SensorData::getHumidity).average();
-            OptionalDouble avgCo2_1 = value.stream().filter(it -> it.getCo2_1() != null)
-                    .mapToInt(SensorData::getCo2_1).average();
-            OptionalDouble avgCo2_2 = value.stream().filter(it -> it.getCo2_2() != null)
-                    .mapToInt(SensorData::getCo2_2).average();
-            OptionalDouble avgTemper2 = value.stream().filter(it -> it.getTemperature2() != null)
-                    .mapToInt(SensorData::getTemperature2).average();
-
-            // creating summarized Data entity for each message
-            resultData.add(new SensorData(key, Timestamp.valueOf(LocalDateTime.now()), value.size(),
-                    avgTemper1.isPresent() ? formatNumber(avgTemper1.getAsDouble()).doubleValue() : null,
-                    avgHumidity.isPresent() ? formatNumber(avgHumidity.getAsDouble()).doubleValue() : null,
-                    avgCo2_1.isPresent() ? formatNumber(avgCo2_1.getAsDouble()).intValue() : null,
-                    avgCo2_2.isPresent() ? formatNumber(avgCo2_2.getAsDouble()).intValue() : null,
-                    avgTemper2.isPresent() ? formatNumber(avgTemper2.getAsDouble()).intValue() : null
-            ));
-        });
-        log.debug("Data summarising ended.");
-        return resultData;
-    }
-
     private void normalizeData(Map<Long, List<SensorData>> sensorDataMap) {
         log.debug("Start of data normalising");
 
         synchronized (dataBuffer) {
             dataBuffer.forEach(it -> {
-                String message = it.replace("\0", "");
+                String [] messages = it.split("\r\n");
+                Arrays.stream(messages).forEach(message -> {
+                    if (validateMessageFormat(message)) return;
 
-                if (validateMessageFormat(message)) return;
+                    String[] strings = message.split(";", 7);
+                    long sensorId = Long.parseLong(strings[0]);
 
-                String[] strings = message.split(";", 7);
-                long sensorId = Long.parseLong(strings[0]);
-
-                // separating data by sensor ID
-                List<SensorData> sensorDataList = sensorDataMap.computeIfAbsent(sensorId, k -> new ArrayList<>());
-                sensorDataList.add(transferRawMessageToData(strings, sensorId));
+                    // separating data by sensor ID
+                    List<SensorData> rawSensorDataList = sensorDataMap.computeIfAbsent(sensorId, k -> new ArrayList<>());
+                    rawSensorDataList.add(transferRawMessageToData(strings, sensorId));
+                });
             });
             dataBuffer.clear();
         }
@@ -124,9 +94,32 @@ public class DataProcessServiceImpl implements DataProcessService {
         return new SensorData(sensorId, null, 0,
                 strings[1].isEmpty() ? null : Double.parseDouble(strings[1]),
                 strings[2].isEmpty() ? null : Double.parseDouble(strings[2]),
-                strings[3].isEmpty() ? null : Integer.parseInt(strings[3]),
-                strings[4].isEmpty() ? null : Integer.parseInt(strings[4]),
-                strings[5].isEmpty() ? null : Integer.parseInt(strings[5]));
+                strings[3].isEmpty() ? null : Integer.parseInt(strings[3]));
+    }
+
+    private List<SensorData> sumUpData(Map<Long, List<SensorData>> sensorDataMap) {
+        log.debug("Start of data summarising");
+
+        List<SensorData> resultData = new ArrayList<>();
+        sensorDataMap.forEach((key, value) -> {
+
+            // counting average on each field
+            OptionalDouble avgTemper = value.stream().filter(it -> it.getTemperature() != null)
+                    .mapToDouble(SensorData::getTemperature).average();
+            OptionalDouble avgHumidity = value.stream().filter(it -> it.getHumidity() != null)
+                    .mapToDouble(SensorData::getHumidity).average();
+            OptionalDouble avgCo2 = value.stream().filter(it -> it.getCo2() != null)
+                    .mapToInt(SensorData::getCo2).average();
+
+            // creating summarized Data entity for each message
+            resultData.add(new SensorData(key, Timestamp.valueOf(LocalDateTime.now()), value.size(),
+                    avgTemper.isPresent() ? formatNumber(avgTemper.getAsDouble()).doubleValue() : null,
+                    avgHumidity.isPresent() ? formatNumber(avgHumidity.getAsDouble()).doubleValue() : null,
+                    avgCo2.isPresent() ? formatNumber(avgCo2.getAsDouble()).intValue() : null
+            ));
+        });
+        log.debug("Data summarising ended.");
+        return resultData;
     }
 
     private BigDecimal formatNumber(double number) {
@@ -134,6 +127,7 @@ public class DataProcessServiceImpl implements DataProcessService {
     }
 
     private boolean validateMessageFormat(String message) {
+        // (int)node_id;(float)(AM2120 - teplota);(float)(AM2120 - vlhost);(int)(MH-Z19 - UART - CO2);(int)(MH-Z19 - PWM - CO2);(int)(MH-Z19 - teplota);
         if (!message.matches("^\\d+;((-?\\d+\\.\\d{0,2})|);((\\d+\\.\\d{0,2})|);((\\d{1,4})|);((\\d{1,4})|);((-?\\d+)|);$")) {
             log.warn("Message doesn't matches expected format: {}", message);
             return true;

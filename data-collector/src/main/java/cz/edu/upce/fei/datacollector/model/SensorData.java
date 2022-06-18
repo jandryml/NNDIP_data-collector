@@ -9,9 +9,7 @@ public class SensorData {
     private final long sensorId;
     private final Timestamp timestamp;
     private final int hits;
-    private final Double temperature1;
+    private final Double temperature;
     private final Double humidity;
-    private final Integer co2_1;
-    private final Integer co2_2;
-    private final Integer temperature2;
+    private final Integer co2;
 }

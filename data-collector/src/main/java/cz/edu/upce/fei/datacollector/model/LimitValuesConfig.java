@@ -1,6 +1,5 @@
 package cz.edu.upce.fei.datacollector.model;
 
-import cz.edu.upce.fei.datacollector.model.LimitValue;
 import lombok.Data;
 
 @Data

@@ -1,4 +1,4 @@
-
+# TODO rewrite to applications.properties
 # DB properties
 spring:
   datasource:
@@ -8,9 +8,9 @@ spring:
     driver-class-name: org.mariadb.jdbc.Driver
 
 # ModBus client configuration
-modbus:
-  url: 127.0.0.1
-  port: 502
+#modbus:
+#  url: 127.0.0.1
+#  port: 502
 
 # Scheduling properties
 connectionHandlingTask: "*/15 * * * * ?"

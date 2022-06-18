@@ -26,9 +26,9 @@ class DataReactionServiceImplTest {
     @Test
     void testReaction() {
         List<SensorData> result = Arrays.asList(
-                new SensorData(1, Timestamp.valueOf(LocalDateTime.now()), 15, 10.0, 10.0, 10, 10, 10),
-                new SensorData(2, Timestamp.valueOf(LocalDateTime.now()), 15, 20.0, 20.0, 20, 20, 20),
-                new SensorData(3, Timestamp.valueOf(LocalDateTime.now()), 25, 25.0, 25.0, 25, 25, 25)
+                new SensorData(1, Timestamp.valueOf(LocalDateTime.now()), 15, 10.0, 10.0, 10),
+                new SensorData(2, Timestamp.valueOf(LocalDateTime.now()), 15, 20.0, 20.0, 20),
+                new SensorData(3, Timestamp.valueOf(LocalDateTime.now()), 25, 25.0, 25.0, 25)
         );
 
         reactionService.handleData(result);
@@ -37,7 +37,7 @@ class DataReactionServiceImplTest {
     @Test
     void testReaction2() {
         List<SensorData> result = Collections.singletonList(
-                new SensorData(1, Timestamp.valueOf(LocalDateTime.now()), 15, 10.0, 10.0, 10, 10, 10)
+                new SensorData(1, Timestamp.valueOf(LocalDateTime.now()), 15, 10.0, 10.0, 10)
         );
 
         reactionService.handleData(result);

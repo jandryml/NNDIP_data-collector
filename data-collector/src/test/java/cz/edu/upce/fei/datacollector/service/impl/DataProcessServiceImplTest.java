@@ -34,9 +34,9 @@ class DataProcessServiceImplTest {
         dataProcessServiceImpl.addData("1;10.00;35.00;600;300;24;asdads".getBytes());
 
         List<SensorData> result = dataProcessServiceImpl.processData();
-        assertDataRecord(result, 1, 0.0, 15.0, 15, 15, 15, 2);
-        assertDataRecord(result, 2, 30.0, 30.0, 30, 30, 30, 1);
-        assertDataRecord(result, 3, 40.0, 40.0, 40, 40, 40, 1);
+        assertDataRecord(result, 1, 0.0, 15.0, 15, 2);
+        assertDataRecord(result, 2, 30.0, 30.0, 30, 1);
+        assertDataRecord(result, 3, 40.0, 40.0, 40, 1);
         reactionService.handleData(result);
     }
 
@@ -51,9 +51,9 @@ class DataProcessServiceImplTest {
         }
 
         List<SensorData> result = dataProcessServiceImpl.processData();
-        assertDataRecord(result, 1, 5.0, 5.0, 5, 5, 5, 2000);
-        assertDataRecord(result, 2, 20.0, 20.0, 20, 20, 20, 1000);
-        assertDataRecord(result, 3, 30.0, 30.0, 30, 30, 30, 1000);
+        assertDataRecord(result, 1, 5.0, 5.0, 5, 2000);
+        assertDataRecord(result, 2, 20.0, 20.0, 20, 1000);
+        assertDataRecord(result, 3, 30.0, 30.0, 30, 1000);
     }
 
     @Test
@@ -63,8 +63,8 @@ class DataProcessServiceImplTest {
         dataProcessServiceImpl.addData("2;;;;;;".getBytes());
 
         List<SensorData> result = dataProcessServiceImpl.processData();
-        assertDataRecord(result, 1, null, null, null, null, null, 2);
-        assertDataRecord(result, 2, null, null, null, null, null, 1);
+        assertDataRecord(result, 1, null, null, null, 2);
+        assertDataRecord(result, 2, null, null, null, 1);
     }
 
     @Test
@@ -74,7 +74,7 @@ class DataProcessServiceImplTest {
         dataProcessServiceImpl.addData("1;20.00;20.00;20;20;20;".getBytes());
 
         List<SensorData> result = dataProcessServiceImpl.processData();
-        assertDataRecord(result, 1, 15.0, 15.0, 15, 15, 15, 3);
+        assertDataRecord(result, 1, 15.0, 15.0, 15, 3);
     }
 
     @Test
@@ -87,16 +87,15 @@ class DataProcessServiceImplTest {
         dataProcessServiceImpl.addData("2;20.00;20.00;;;;".getBytes());
 
         List<SensorData> result = dataProcessServiceImpl.processData();
-        assertDataRecord(result, 1, null, null, 15, 15, 15, 3);
-        assertDataRecord(result, 2, 15.0, 15.0, null, null, null, 3);
+        assertDataRecord(result, 1, null, null, 15, 3);
+        assertDataRecord(result, 2, 15.0, 15.0, null, 3);
         reactionService.handleData(result);
     }
 
-    private void assertDataRecord(List<SensorData> data, long exSensorId, Double exTemper1, Double exHumidity, Integer exCo2_1, Integer exCo2_2, Integer exTemper2, Integer hits) {
+    private void assertDataRecord(List<SensorData> data, long exSensorId, Double exTemper, Double exHumidity, Integer exCo2, Integer hits) {
         Assertions.assertEquals(
-                data.stream().filter(it -> it.getSensorId() == exSensorId && Objects.equals(it.getTemperature1(), exTemper1)
-                        && Objects.equals(it.getHumidity(), exHumidity) && Objects.equals(it.getCo2_1(), exCo2_1)
-                        && Objects.equals(it.getCo2_2(), exCo2_2) && Objects.equals(it.getTemperature2(), exTemper2)
+                data.stream().filter(it -> it.getSensorId() == exSensorId && Objects.equals(it.getTemperature(), exTemper)
+                        && Objects.equals(it.getHumidity(), exHumidity) && Objects.equals(it.getCo2(), exCo2)
                         && hits.equals(it.getHits())
                 ).count(), 1);
     }
