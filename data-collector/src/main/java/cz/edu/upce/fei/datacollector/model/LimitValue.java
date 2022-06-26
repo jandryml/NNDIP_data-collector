@@ -9,5 +9,5 @@ import java.util.List;
 public class LimitValue {
     private String name;
     private Double value;
-    private List<ThresholdAction> actionList = Collections.emptyList();
+    private List<Action> actionList = Collections.emptyList();
 }

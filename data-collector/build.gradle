@@ -37,7 +37,8 @@ dependencies {
     // gnu lib
     implementation 'org.openmuc:jrxtx:1.0.1'
 
-    implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
+    implementation 'com.pi4j:pi4j-core:1.4'
+    implementation 'mysql:mysql-connector-java:8.0.28'
 
     compileOnly 'org.projectlombok:lombok:1.18.22'
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
