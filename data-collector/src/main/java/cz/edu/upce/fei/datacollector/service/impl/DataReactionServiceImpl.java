@@ -1,112 +1,118 @@
 package cz.edu.upce.fei.datacollector.service.impl;
 
-import cz.edu.upce.fei.datacollector.config.ReactionConfig;
-import cz.edu.upce.fei.datacollector.model.LimitValue;
-import cz.edu.upce.fei.datacollector.model.LimitValuesConfig;
-import cz.edu.upce.fei.datacollector.model.SensorData;
+import cz.edu.upce.fei.datacollector.model.Action;
+import cz.edu.upce.fei.datacollector.model.ActionOutput;
+import cz.edu.upce.fei.datacollector.model.plan.Plan;
+import cz.edu.upce.fei.datacollector.repository.ActionRepository;
+import cz.edu.upce.fei.datacollector.repository.AddressStateRepository;
+import cz.edu.upce.fei.datacollector.service.CommService;
 import cz.edu.upce.fei.datacollector.service.DataReactionService;
+import cz.edu.upce.fei.datacollector.service.PlanService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class DataReactionServiceImpl implements DataReactionService {
 
-    private final ReactionConfig reactionDefaultConfig;
+    // TODO check and remove
+//    private final ReactionConfig reactionDefaultConfig;
+//    private LimitValuesConfig defaultLimitConfig;
+//    private Map<Long, LimitValuesConfig> sensorsLimitValuesMap;
 
-    private LimitValuesConfig defaultLimitConfig;
-    private Map<Long, LimitValuesConfig> sensorsLimitValuesMap;
+    private final PlanService planService;
+    private final ActionRepository actionRepository;
+    private final CommService commService;
+    private final AddressStateRepository addressStateRepository;
 
-    @PostConstruct
-    public void initSetup() {
-        fetchLimitValues();
-    }
+
+    // TODO check and remove
+//    @PostConstruct
+//    public void initSetup() {
+//        fetchLimitValues();
+//    }
+
+//    @Override
+//    @Scheduled(cron = "${planValuesFetch}")
+//    public void fetchLimitValues() {
+//        //TODO try to fetch config from DB
+//        // if not successful use defaults
+////        defaultLimitConfig = reactionDefaultConfig.getDefaultLimits();
+//
+//        //TODO might use map, record per sensor, or default one
+//    }
 
     @Override
-    @Scheduled(cron = "${limitValuesFetch}")
-    public void fetchLimitValues() {
-        //TODO try to fetch config from DB
-        // if not successful use defaults
-        defaultLimitConfig = reactionDefaultConfig.getDefaultLimits();
+    @Scheduled(cron = "${planReactionPeriod}")
+    // TODO rename
+    public void handleData() {
+        log.info("Start sensor plan analysis");
 
-        //TODO might use map, record per sensor, or default one
+        List<ActionOutput> actionOutputs = actionRepository.getAllOutputs();
+        Map<ActionOutput, MapValue> resultMap = prepareEmptyResultMap(actionOutputs);
 
-    }
+        List<Plan> planList = planService.getAllActivePlans();
+        planList.sort(Comparator.comparing(Plan::getPriority));
 
-    @Override
-    public void handleData(List<SensorData> dataList) {
-        log.info("Start sensor data analysis");
-        dataList.forEach(it -> {
-            LimitValuesConfig limitConfig = getSensorLimitValuesOrDefault(it);
-
-            handleTemperature(it, limitConfig);
-            handleHumidity(it, limitConfig);
-            handleCo2(it, limitConfig);
-        });
-
-        log.info("End data analysis");
-    }
-
-    private LimitValuesConfig getSensorLimitValuesOrDefault(SensorData it) {
-        return sensorsLimitValuesMap != null ? sensorsLimitValuesMap.getOrDefault(it.getSensorId(), defaultLimitConfig) : defaultLimitConfig;
-    }
-
-    private void handleTemperature(SensorData sensorData, LimitValuesConfig limitConfig) {
-        Double fetchedValue = sensorData.getTemperature();
-        if (fetchedValue != null) {
-            if (isLimitConfigured(limitConfig.getTemperatureMax()) && fetchedValue > limitConfig.getTemperatureMax().getValue()) {
-                log.info("Sensor {}: temperature too high", sensorData.getSensorId());
-            } else if (isLimitConfigured(limitConfig.getTemperatureMin()) && fetchedValue < limitConfig.getTemperatureMin().getValue()) {
-                log.info("Sensor {}: temperature too low", sensorData.getSensorId());
-                //TODO remove later, wont be used
-            } else {
-                log.info("Sensor {}: temperature is OK", sensorData.getSensorId());
-            }
-        } else {
-            log.info("Sensor {}: temperature not available", sensorData.getSensorId());
+        for (Plan plan : planList) {
+            plan.getActionList().forEach(actualAction ->
+                    resultMap.putIfAbsent(transferAction(actualAction), new MapValue(plan.getPriority(), actualAction)));
         }
+
+        // TODO fill data from local application.properties?
+
+        List<Action> resultActions = fillEmptyRecordsAndTransfer(resultMap);
+        // write to registers
+        writeToRegisters(resultActions);
+        // write to modbus/rPi
+        commService.writeToExternalDevices(resultActions);
+
+        log.info("End plan analysis");
     }
 
-    private void handleCo2(SensorData sensorData, LimitValuesConfig limitConfig) {
-        Integer fetchedValue = sensorData.getCo2();
-        if (fetchedValue != null) {
-            if (isLimitConfigured(limitConfig.getCo2Max()) && fetchedValue > limitConfig.getCo2Max().getValue()) {
-                log.info("Sensor {}: co2 too high", sensorData.getSensorId());
-            } else if (isLimitConfigured(limitConfig.getCo2Min()) && fetchedValue < limitConfig.getCo2Min().getValue()) {
-                log.info("Sensor {}: co2 too low", sensorData.getSensorId());
-                //TODO remove later, wont be used
-            } else {
-                log.info("Sensor {}: co2 is OK", sensorData.getSensorId());
-            }
-        } else {
-            log.info("Sensor {}: co2 not available", sensorData.getSensorId());
+    private void writeToRegisters(List<Action> resultActions) {
+        addressStateRepository.removeAllAddressStates();
+        addressStateRepository.setAddressStates(resultActions);
+    }
+
+    private ActionOutput transferAction(Action action) {
+        return new ActionOutput().outputType(action.outputType()).address(action.address());
+    }
+
+    private Map<ActionOutput, MapValue> prepareEmptyResultMap(List<ActionOutput> actionOutputs) {
+        Map<ActionOutput, MapValue> resultMap = new HashMap<>();
+        for (ActionOutput actionOutput : actionOutputs) {
+            resultMap.put(actionOutput, null);
         }
+        return resultMap;
     }
 
-    private void handleHumidity(SensorData sensorData, LimitValuesConfig limitConfig) {
-        Double fetchedValue = sensorData.getHumidity();
-        if (fetchedValue != null) {
-            if (isLimitConfigured(limitConfig.getHumidityMax()) && fetchedValue > limitConfig.getHumidityMax().getValue()) {
-                log.info("Sensor {}: humidity too high", sensorData.getSensorId());
-            } else if (isLimitConfigured(limitConfig.getHumidityMin()) && fetchedValue < limitConfig.getHumidityMin().getValue()) {
-                log.info("Sensor {}: humidity too low", sensorData.getSensorId());
-                //TODO remove later, wont be used
-            } else {
-                log.info("Sensor {}: humidity is OK", sensorData.getSensorId());
-            }
-        } else {
-            log.info("Sensor {}: humidity not available", sensorData.getSensorId());
+    private List<Action> fillEmptyRecordsAndTransfer(Map<ActionOutput, MapValue> resultMap) {
+        for (ActionOutput actionOutput : resultMap.keySet()) {
+            resultMap.putIfAbsent(actionOutput, new MapValue(
+                    0,
+                    new Action()
+                            .name("Generated zero value action")
+                            .address(actionOutput.address())
+                            .outputType(actionOutput.outputType())
+                            .value("0")
+            ));
         }
+        return resultMap.values().stream().map(MapValue::getAction).collect(Collectors.toList());
     }
 
-    private boolean isLimitConfigured(LimitValue limitValue) {
-        return limitValue != null && limitValue.getValue() != null && limitValue.getActionList() != null;
+
+    @Getter
+    @RequiredArgsConstructor
+    private class MapValue {
+        private final int priority;
+        private final Action action;
     }
 }

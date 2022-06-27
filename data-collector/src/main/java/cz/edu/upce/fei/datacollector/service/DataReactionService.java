@@ -1,14 +1,13 @@
 package cz.edu.upce.fei.datacollector.service;
 
-import cz.edu.upce.fei.datacollector.model.SensorData;
 import org.springframework.scheduling.annotation.Scheduled;
-
-import java.util.List;
 
 public interface DataReactionService {
 
-    @Scheduled(cron = "${limitValuesFetch}")
-    void fetchLimitValues();
+    // TODO check and remove
+//    @Scheduled(cron = "${planValuesFetch}")
+//    void fetchLimitValues();
 
-    void handleData(List<SensorData> dataList);
+    @Scheduled(cron = "${planReactionPeriod}")
+    void handleData();
 }

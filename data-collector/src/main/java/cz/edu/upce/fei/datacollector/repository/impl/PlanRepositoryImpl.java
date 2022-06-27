@@ -68,7 +68,7 @@ public class PlanRepositoryImpl implements PlanRepository {
 
     @Override
     public List<TimeGpioPlan> getEnabledTimeGpioPlans() {
-        String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, gp.address, gp.default_state, tgp.duration, tgp.last_triggered FROM plan p " +
+        String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, gp.pin_address, gp.default_state, tgp.duration, tgp.last_triggered FROM plan p " +
                 "INNER JOIN gpio_plan gp ON p.id = gp.id " +
                 "INNER JOIN time_gpio_plan tgp ON gp.id = tgp.id " +
                 "where p.plan_type = ? and enabled";

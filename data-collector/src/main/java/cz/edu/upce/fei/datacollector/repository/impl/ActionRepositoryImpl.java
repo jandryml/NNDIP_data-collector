@@ -1,6 +1,7 @@
 package cz.edu.upce.fei.datacollector.repository.impl;
 
 import cz.edu.upce.fei.datacollector.model.Action;
+import cz.edu.upce.fei.datacollector.model.ActionOutput;
 import cz.edu.upce.fei.datacollector.model.OutputType;
 import cz.edu.upce.fei.datacollector.repository.ActionRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,5 +45,27 @@ public class ActionRepositoryImpl implements ActionRepository {
         });
 
         return actionList;
+    }
+
+    @Override
+    public List<ActionOutput> getAllOutputs() {
+        String query = "select output_type, address from action group by output_type, address;";
+
+        List<ActionOutput> actionOutputs = new ArrayList<>();
+
+        jdbcTemplate.execute(query, (PreparedStatementCallback<ActionOutput>) ps -> {
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                actionOutputs.add(new ActionOutput()
+                        .address(rs.getString("address"))
+                        .outputType(OutputType.valueOf(rs.getString("output_type")))
+                );
+            }
+            return null;
+        });
+
+        return actionOutputs;
     }
 }
