@@ -7,6 +7,7 @@ import cz.edu.upce.fei.datacollector.repository.PlanRepository;
 import cz.edu.upce.fei.datacollector.service.LimitPlanService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,7 +23,8 @@ public class LimitPlanServiceImpl implements LimitPlanService {
     private final PlanRepository planRepository;
 
     // TODO take minutes from properties file
-    private final int maxMinutesAgeOfDataAllowed = 15;
+    @Value("${limitPlan.dataFetching.maxAgeInMinutes:5}")
+    private int maxMinutesAgeOfDataAllowed;
 
     @Override
     public List<LimitPlan> getActiveLimitPlans() {
