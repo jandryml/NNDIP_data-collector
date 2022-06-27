@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 @Setter
 @EqualsAndHashCode(callSuper = true)
 public class ManualGpioPlan extends GpioPlan {
-    private boolean turnedOn;
+    private boolean active;
 
     @Override
     public String toString() {
@@ -21,7 +21,7 @@ public class ManualGpioPlan extends GpioPlan {
                 ", planType=" + planType +
                 ", address=" + address +
                 ", defaultState=" + defaultState +
-                ", turnedOn=" + turnedOn +
+                ", active=" + active +
                 '}';
     }
 }

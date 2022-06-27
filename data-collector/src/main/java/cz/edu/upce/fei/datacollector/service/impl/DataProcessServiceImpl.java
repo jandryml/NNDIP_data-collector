@@ -91,10 +91,14 @@ public class DataProcessServiceImpl implements DataProcessService {
 
     private SensorData transferRawMessageToData(String[] strings, long sensorId) {
         // hits and timestamp is unused
-        return new SensorData(sensorId, null, 0,
-                strings[1].isEmpty() ? null : Double.parseDouble(strings[1]),
-                strings[2].isEmpty() ? null : Double.parseDouble(strings[2]),
-                strings[3].isEmpty() ? null : Integer.parseInt(strings[3]));
+        return SensorData.builder()
+                .sensorId(sensorId)
+                .timestamp(null)
+                .hits(0)
+                .temperature(strings[1].isEmpty() ? null : Double.parseDouble(strings[1]))
+                .humidity(strings[2].isEmpty() ? null : Double.parseDouble(strings[2]))
+                .co2(strings[3].isEmpty() ? null : Integer.parseInt(strings[3]))
+        .build();
     }
 
     private List<SensorData> sumUpData(Map<Long, List<SensorData>> sensorDataMap) {
@@ -112,11 +116,14 @@ public class DataProcessServiceImpl implements DataProcessService {
                     .mapToInt(SensorData::getCo2).average();
 
             // creating summarized Data entity for each message
-            resultData.add(new SensorData(key, Timestamp.valueOf(LocalDateTime.now()), value.size(),
-                    avgTemper.isPresent() ? formatNumber(avgTemper.getAsDouble()).doubleValue() : null,
-                    avgHumidity.isPresent() ? formatNumber(avgHumidity.getAsDouble()).doubleValue() : null,
-                    avgCo2.isPresent() ? formatNumber(avgCo2.getAsDouble()).intValue() : null
-            ));
+            resultData.add(SensorData.builder()
+                    .sensorId(key)
+                    .timestamp(Timestamp.valueOf(LocalDateTime.now()))
+                    .hits(value.size())
+                    .temperature(avgTemper.isPresent() ? formatNumber(avgTemper.getAsDouble()).doubleValue() : null)
+                    .humidity(avgHumidity.isPresent() ? formatNumber(avgHumidity.getAsDouble()).doubleValue() : null)
+                    .co2(avgCo2.isPresent() ? formatNumber(avgCo2.getAsDouble()).intValue() : null)
+                    .build());
         });
         log.debug("Data summarising ended.");
         return resultData;

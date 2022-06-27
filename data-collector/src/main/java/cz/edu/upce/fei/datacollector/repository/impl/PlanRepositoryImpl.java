@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class PlanRepositoryImpl implements PlanRepository {
 
     @Override
     public List<ManualGpioPlan> getEnabledManualGpioPlans() {
-        String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, gp.pin_address, gp.default_state, mgp.turned_on FROM plan p " +
+        String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, gp.pin_address, gp.default_state, mgp.active FROM plan p " +
                 "INNER JOIN gpio_plan gp ON p.id = gp.id " +
                 "INNER JOIN manual_gpio_plan mgp ON gp.id = mgp.id " +
                 "where p.plan_type = ? and enabled";
@@ -56,7 +57,7 @@ public class PlanRepositoryImpl implements PlanRepository {
                 plan.setPlanType(PlanType.MANUAL_GPIO_PLAN);
                 plan.setAddress(RaspiPin.getPinByAddress(rs.getInt("pin_address")));
                 plan.setDefaultState(PinState.valueOf(rs.getString("default_state")));
-                plan.setTurnedOn(rs.getBoolean("turned_on"));
+                plan.setActive(rs.getBoolean("active"));
 
                 resultList.add(plan);
             }
@@ -168,7 +169,7 @@ public class PlanRepositoryImpl implements PlanRepository {
 
     @Override
     public List<LimitPlan> getEnabledLimitPlans() {
-        String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, lp.value_type, lp.optimal_value, lp.threshold_value, yp.name as period_name FROM plan p " +
+        String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, lp.value_type, lp.optimal_value, lp.threshold_value, yp.name as period_name, lp.active, lp.last_triggered FROM plan p " +
                 "INNER JOIN limit_plan lp ON p.id = lp.id " +
                 "INNER JOIN year_period yp ON lp.year_period_id = yp.id " +
                 "where p.plan_type = ? and p.enabled and yp.active";
@@ -193,6 +194,8 @@ public class PlanRepositoryImpl implements PlanRepository {
                 plan.setValueType(LimitPlanType.valueOf(rs.getString("value_type")));
                 plan.setOptimalValue(rs.getDouble("optimal_value"));
                 plan.setThresholdValue(rs.getDouble("threshold_value"));
+                plan.setActive(rs.getBoolean("active"));
+                plan.setLastTriggered(rs.getTimestamp("last_triggered").toLocalDateTime());
                 plan.setPeriodType(YearPeriodType.valueOf(rs.getString("period_name")));
 
                 resultList.add(plan);
@@ -201,5 +204,15 @@ public class PlanRepositoryImpl implements PlanRepository {
         });
 
         return resultList;
+    }
+
+    @Override
+    public void updateLimitPlan(LimitPlan limitPlan) {
+        String sql = "UPDATE limit_plan SET active = ?, last_triggered = ? WHERE id = ?";
+        jdbcTemplate.update(sql,
+                limitPlan.isActive(),
+                limitPlan.getLastTriggered().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                limitPlan.getId()
+        );
     }
 }

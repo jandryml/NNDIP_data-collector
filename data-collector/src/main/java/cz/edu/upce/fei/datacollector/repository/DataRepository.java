@@ -7,4 +7,6 @@ import java.util.List;
 public interface DataRepository {
 
     void saveData(List<SensorData> data);
+
+    List<SensorData> getLatestDataNoOlderThan(int minutes);
 }

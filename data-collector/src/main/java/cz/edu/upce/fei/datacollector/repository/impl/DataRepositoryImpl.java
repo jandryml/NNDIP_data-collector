@@ -5,10 +5,13 @@ import cz.edu.upce.fei.datacollector.repository.DataRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -39,5 +42,38 @@ public class DataRepositoryImpl implements DataRepository {
                 return sensorDataList.size();
             }
         });
+    }
+
+    @Override
+    public List<SensorData> getLatestDataNoOlderThan(int minutes) {
+        String query = "SELECT d.id, d.hits, d.sensor_id, d.data_timestamp, d.co2, d.humidity, d.temperature\n" +
+                "FROM data d\n" +
+                "INNER JOIN (\n" +
+                "  SELECT sensor_id, max(data_timestamp) AS latest_date\n" +
+                "  FROM data\n" +
+                "  WHERE data_timestamp > DATE_SUB(NOW(),INTERVAL ? MINUTE)\n" +
+                "  GROUP BY sensor_id\n" +
+                "  ) gd ON gd.sensor_id = d.sensor_id AND gd.latest_date = d.data_timestamp;";
+
+        List<SensorData> resultList = new ArrayList<>();
+
+        jdbcTemplate.execute(query, (PreparedStatementCallback<SensorData>) ps -> {
+            ps.setInt(1, minutes);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                resultList.add(SensorData.builder()
+                        .sensorId(rs.getLong("sensor_id"))
+                        .timestamp(rs.getTimestamp("data_timestamp"))
+                        .hits(rs.getInt("hits"))
+                        .temperature(rs.getDouble("temperature"))
+                        .humidity(rs.getDouble("humidity"))
+                        .co2(rs.getInt("co2"))
+                        .build());
+            }
+            return null;
+        });
+        return resultList;
     }
 }

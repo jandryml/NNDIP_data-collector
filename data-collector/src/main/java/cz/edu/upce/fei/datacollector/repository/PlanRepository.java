@@ -14,4 +14,5 @@ public interface PlanRepository {
     List<ManualPlan> getEnabledManualPlans();
     List<TimePlan> getEnabledTimePlans();
     List<LimitPlan> getEnabledLimitPlans();
+    void updateLimitPlan(LimitPlan limitPlan);
 }
