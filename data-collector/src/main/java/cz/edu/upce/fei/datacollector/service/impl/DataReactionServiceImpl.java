@@ -1,10 +1,10 @@
 package cz.edu.upce.fei.datacollector.service.impl;
 
+import cz.edu.upce.fei.datacollector.config.DefaultPlanConfig;
 import cz.edu.upce.fei.datacollector.model.Action;
 import cz.edu.upce.fei.datacollector.model.ActionOutput;
 import cz.edu.upce.fei.datacollector.model.plan.Plan;
 import cz.edu.upce.fei.datacollector.repository.ActionRepository;
-import cz.edu.upce.fei.datacollector.repository.AddressStateRepository;
 import cz.edu.upce.fei.datacollector.service.CommService;
 import cz.edu.upce.fei.datacollector.service.DataReactionService;
 import cz.edu.upce.fei.datacollector.service.PlanService;
@@ -22,32 +22,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DataReactionServiceImpl implements DataReactionService {
 
-    // TODO check and remove
-//    private final ReactionConfig reactionDefaultConfig;
-//    private LimitValuesConfig defaultLimitConfig;
-//    private Map<Long, LimitValuesConfig> sensorsLimitValuesMap;
-
     private final PlanService planService;
     private final ActionRepository actionRepository;
     private final CommService commService;
-    private final AddressStateRepository addressStateRepository;
-
-
-    // TODO check and remove
-//    @PostConstruct
-//    public void initSetup() {
-//        fetchLimitValues();
-//    }
-
-//    @Override
-//    @Scheduled(cron = "${planValuesFetch}")
-//    public void fetchLimitValues() {
-//        //TODO try to fetch config from DB
-//        // if not successful use defaults
-////        defaultLimitConfig = reactionDefaultConfig.getDefaultLimits();
-//
-//        //TODO might use map, record per sensor, or default one
-//    }
+    private final DefaultPlanConfig defaultPlanConfig;
 
     @Override
     @Scheduled(cron = "${planReactionPeriod}")
@@ -61,29 +39,29 @@ public class DataReactionServiceImpl implements DataReactionService {
         List<Plan> planList = planService.getAllActivePlans();
         planList.sort(Comparator.comparing(Plan::getPriority));
 
-        for (Plan plan : planList) {
-            plan.getActionList().forEach(actualAction ->
-                    resultMap.putIfAbsent(transferAction(actualAction), new MapValue(plan.getPriority(), actualAction)));
-        }
+        planList.forEach(plan ->
+                fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList()));
 
         // TODO fill data from local application.properties?
 
         List<Action> resultActions = fillEmptyRecordsAndTransfer(resultMap);
-        // write to registers
-        writeToRegisters(resultActions);
+
         // write to modbus/rPi
         commService.writeToExternalDevices(resultActions);
 
         log.info("End plan analysis");
     }
 
-    private void writeToRegisters(List<Action> resultActions) {
-        addressStateRepository.removeAllAddressStates();
-        addressStateRepository.setAddressStates(resultActions);
+    private void fillMissingActionsToResultMap(Map<ActionOutput, MapValue> resultMap, int priority, List<Action> actionList) {
+        actionList.forEach(action ->
+                resultMap.putIfAbsent(
+                        transferAction(action),
+                        new MapValue(priority, action))
+        );
     }
 
     private ActionOutput transferAction(Action action) {
-        return new ActionOutput().outputType(action.outputType()).address(action.address());
+        return new ActionOutput().outputType(action.getOutputType()).address(action.getAddress());
     }
 
     private Map<ActionOutput, MapValue> prepareEmptyResultMap(List<ActionOutput> actionOutputs) {
@@ -96,18 +74,16 @@ public class DataReactionServiceImpl implements DataReactionService {
 
     private List<Action> fillEmptyRecordsAndTransfer(Map<ActionOutput, MapValue> resultMap) {
         for (ActionOutput actionOutput : resultMap.keySet()) {
-            resultMap.putIfAbsent(actionOutput, new MapValue(
-                    0,
-                    new Action()
-                            .name("Generated zero value action")
-                            .address(actionOutput.address())
-                            .outputType(actionOutput.outputType())
-                            .value("0")
-            ));
+            Action action = new Action();
+            action.setName("Generated zero value action");
+            action.setAddress(actionOutput.address());
+            action.setOutputType(actionOutput.outputType());
+            action.setValue("0");
+
+            resultMap.putIfAbsent(actionOutput, new MapValue(0, action));
         }
         return resultMap.values().stream().map(MapValue::getAction).collect(Collectors.toList());
     }
-
 
     @Getter
     @RequiredArgsConstructor
