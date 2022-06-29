@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface LimitPlanService {
     List<LimitPlan> getActiveLimitPlans();
+
+    List<LimitPlan> getActiveLimitPlansFromProvided(List<LimitPlan> limitPlans);
 }

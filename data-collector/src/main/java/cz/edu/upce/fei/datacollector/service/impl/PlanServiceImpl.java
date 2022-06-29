@@ -1,5 +1,6 @@
 package cz.edu.upce.fei.datacollector.service.impl;
 
+import cz.edu.upce.fei.datacollector.config.DefaultPlanConfig;
 import cz.edu.upce.fei.datacollector.model.plan.ManualPlan;
 import cz.edu.upce.fei.datacollector.model.plan.Plan;
 import cz.edu.upce.fei.datacollector.model.plan.TimePlan;
@@ -24,6 +25,7 @@ public class PlanServiceImpl implements PlanService {
 
     private final PlanRepository planRepository;
     private final LimitPlanService limitPlanService;
+    private final DefaultPlanConfig defaultPlanConfig;
 
     @Override
     public List<Plan> getAllActivePlans() {
@@ -55,6 +57,11 @@ public class PlanServiceImpl implements PlanService {
     @Override
     public List<LimitPlan> getActiveLimitPlan() {
         return limitPlanService.getActiveLimitPlans();
+    }
+
+    @Override
+    public List<LimitPlan> getActiveDefaultLimitPlan() {
+        return limitPlanService.getActiveLimitPlansFromProvided(defaultPlanConfig.getDefaultLimitPlans());
     }
 
     @Override

@@ -18,6 +18,8 @@ public interface PlanService {
 
     List<LimitPlan> getActiveLimitPlan();
 
+    List<LimitPlan> getActiveDefaultLimitPlan();
+
     List<TimePlan> getActiveTimePlan();
 
     List<ManualPlan> getActiveManualPlan();

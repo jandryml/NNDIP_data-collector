@@ -29,9 +29,8 @@ public class DataReactionServiceImpl implements DataReactionService {
 
     @Override
     @Scheduled(cron = "${planReactionPeriod}")
-    // TODO rename
-    public void handleData() {
-        log.info("Start sensor plan analysis");
+    public void resolvePlanResults() {
+        log.debug("Start plan analysis");
 
         List<ActionOutput> actionOutputs = actionRepository.getAllOutputs();
         Map<ActionOutput, MapValue> resultMap = prepareEmptyResultMap(actionOutputs);
@@ -42,14 +41,19 @@ public class DataReactionServiceImpl implements DataReactionService {
         planList.forEach(plan ->
                 fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList()));
 
-        // TODO fill data from local application.properties?
+        // filling with default Limit plans from application properties
+        planService.getActiveDefaultLimitPlan().forEach(plan ->
+                fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList()));
+
+        // filling missing values with default values from application properties
+        fillMissingActionsToResultMap(resultMap, -1, defaultPlanConfig.getDefaultActions());
 
         List<Action> resultActions = fillEmptyRecordsAndTransfer(resultMap);
 
         // write to modbus/rPi
         commService.writeToExternalDevices(resultActions);
 
-        log.info("End plan analysis");
+        log.debug("End plan analysis");
     }
 
     private void fillMissingActionsToResultMap(Map<ActionOutput, MapValue> resultMap, int priority, List<Action> actionList) {

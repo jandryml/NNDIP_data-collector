@@ -28,15 +28,25 @@ public class LimitPlanServiceImpl implements LimitPlanService {
 
     @Override
     public List<LimitPlan> getActiveLimitPlans() {
-        log.info("Getting active limit plans.");
+        log.debug("Getting active limit plans.");
         List<LimitPlan> planList = planRepository.getEnabledLimitPlans();
+        return evaluateActivePlans(planList);
+    }
+
+    @Override
+    public List<LimitPlan> getActiveLimitPlansFromProvided(List<LimitPlan> limitPlans) {
+        log.debug("Getting active limit plans from provided limit plant list");
+        return evaluateActivePlans(limitPlans);
+    }
+
+    private List<LimitPlan> evaluateActivePlans(List<LimitPlan> providedLimitPlans) {
         List<SensorData> sensorData = dataRepository.getLatestDataNoOlderThan(maxMinutesAgeOfDataAllowed);
 
         if (sensorData.isEmpty()) {
             log.info("No data not older than {} minutes found!", maxMinutesAgeOfDataAllowed);
             return Collections.emptyList();
         } else {
-            List<LimitPlan> limitPlans = planList.stream()
+            List<LimitPlan> limitPlans = providedLimitPlans.stream()
                     .filter(it -> isLimitPlanActive(it, sensorData))
                     .collect(Collectors.toList());
             log.info("Found {} active plan(s).", limitPlans.size());

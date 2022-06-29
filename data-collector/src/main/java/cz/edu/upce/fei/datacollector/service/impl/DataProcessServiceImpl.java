@@ -47,7 +47,6 @@ public class DataProcessServiceImpl implements DataProcessService {
         dataBuffer.add(message);
     }
 
-    // TODO might change to private
     public List<SensorData> processData() {
         log.info("Start of data processing.");
 
@@ -57,7 +56,6 @@ public class DataProcessServiceImpl implements DataProcessService {
 
         List<SensorData> resultData = sumUpData(sensorDataMap);
 
-        //TODO change this behaviour
         log.info("Result of data processing:");
         for (SensorData sensorData : resultData) {
             log.info("{}", sensorData);
