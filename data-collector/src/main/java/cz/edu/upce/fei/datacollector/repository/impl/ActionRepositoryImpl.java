@@ -33,13 +33,13 @@ public class ActionRepositoryImpl implements ActionRepository {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                actionList.add(new Action()
-                        .id(rs.getLong("id"))
-                        .name(rs.getString("name"))
-                        .address(rs.getString("address"))
-                        .outputType(OutputType.valueOf(rs.getString("output_type")))
-                        .value(rs.getString("value"))
-                );
+                Action action = new Action();
+                action.setId(rs.getLong("id"));
+                action.setName(rs.getString("name"));
+                action.setAddress(rs.getString("address"));
+                action.setOutputType(OutputType.valueOf(rs.getString("output_type")));
+                action.setValue(rs.getString("value"));
+                actionList.add(action);
             }
             return null;
         });

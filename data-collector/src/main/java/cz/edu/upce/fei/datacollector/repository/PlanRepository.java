@@ -10,6 +10,7 @@ import java.util.List;
 
 public interface PlanRepository {
     List<ManualGpioPlan> getEnabledManualGpioPlans();
+    void setManualGpioPlanActiveState(long planId, boolean isOn);
     List<TimeGpioPlan> getEnabledTimeGpioPlans();
     List<ManualPlan> getEnabledManualPlans();
     List<TimePlan> getEnabledTimePlans();

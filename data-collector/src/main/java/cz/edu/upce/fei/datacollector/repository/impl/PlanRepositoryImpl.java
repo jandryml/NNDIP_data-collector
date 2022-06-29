@@ -67,6 +67,12 @@ public class PlanRepositoryImpl implements PlanRepository {
     }
 
     @Override
+    public void setManualGpioPlanActiveState(long planId, boolean isOn) {
+        String query = "UPDATE manual_gpio_plan SET active = ? WHERE id = ?";
+        jdbcTemplate.update(query, isOn, planId);
+    }
+
+    @Override
     public List<TimeGpioPlan> getEnabledTimeGpioPlans() {
         String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, gp.pin_address, gp.default_state, tgp.duration, tgp.last_triggered FROM plan p " +
                 "INNER JOIN gpio_plan gp ON p.id = gp.id " +
