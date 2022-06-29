@@ -37,7 +37,7 @@ public class DataProcessServiceImpl implements DataProcessService {
 
         dataRepository.saveData(processedData);
 
-        reactionService.handleData(processedData);
+//        reactionService.handleData(processedData);
     }
 
     @Override

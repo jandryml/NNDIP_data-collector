@@ -1,8 +1,14 @@
 package cz.edu.upce.fei.datacollector.service.impl;
 
+import cz.edu.upce.fei.datacollector.config.DefaultPlanConfig;
 import cz.edu.upce.fei.datacollector.model.SensorData;
+import cz.edu.upce.fei.datacollector.repository.AddressStateRepository;
+import cz.edu.upce.fei.datacollector.repository.DataRepository;
 import cz.edu.upce.fei.datacollector.service.DataProcessService;
 import cz.edu.upce.fei.datacollector.service.DataReactionService;
+import cz.edu.upce.fei.datacollector.service.LimitPlanService;
+import cz.edu.upce.fei.datacollector.service.PlanService;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @SpringBootTest
 class DataProcessServiceImplTest {
 
@@ -37,7 +44,7 @@ class DataProcessServiceImplTest {
         assertDataRecord(result, 1, 0.0, 15.0, 15, 2);
         assertDataRecord(result, 2, 30.0, 30.0, 30, 1);
         assertDataRecord(result, 3, 40.0, 40.0, 40, 1);
-        reactionService.handleData(result);
+       //reactionService.handleData(result);
     }
 
     @Test
@@ -89,7 +96,7 @@ class DataProcessServiceImplTest {
         List<SensorData> result = dataProcessServiceImpl.processData();
         assertDataRecord(result, 1, null, null, 15, 3);
         assertDataRecord(result, 2, 15.0, 15.0, null, 3);
-        reactionService.handleData(result);
+        //reactionService.handleData(result);
     }
 
     private void assertDataRecord(List<SensorData> data, long exSensorId, Double exTemper, Double exHumidity, Integer exCo2, Integer hits) {
