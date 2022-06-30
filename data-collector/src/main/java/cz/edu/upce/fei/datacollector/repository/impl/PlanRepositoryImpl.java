@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +71,13 @@ public class PlanRepositoryImpl implements PlanRepository {
     public void setManualGpioPlanActiveState(long planId, boolean isOn) {
         String query = "UPDATE manual_gpio_plan SET active = ? WHERE id = ?";
         jdbcTemplate.update(query, isOn, planId);
+    }
+
+    @Override
+    public void setTimeGpioPlanActualTime(long planId, LocalDateTime localDateTime) {
+        String query = "UPDATE time_gpio_plan SET last_triggered = ? WHERE id = ?";
+        jdbcTemplate.update(query,
+                localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), planId);
     }
 
     @Override

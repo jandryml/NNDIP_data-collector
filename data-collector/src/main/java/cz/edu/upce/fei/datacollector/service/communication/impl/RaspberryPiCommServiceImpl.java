@@ -4,7 +4,6 @@ import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import cz.edu.upce.fei.datacollector.model.Action;
 import cz.edu.upce.fei.datacollector.model.OutputType;
-import cz.edu.upce.fei.datacollector.model.plan.gpio.ManualGpioPlan;
 import cz.edu.upce.fei.datacollector.repository.PlanRepository;
 import cz.edu.upce.fei.datacollector.service.communication.RaspberryPiCommService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,25 +61,45 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     @Scheduled(cron = "${refreshGpioListenersPeriod}")
     public void registerListeners() {
         log.trace("Registering GPIO listeners");
-        List<ManualGpioPlan> manualGpioPlans = planRepository.getEnabledManualGpioPlans();
 
         final GpioController gpio = GpioFactory.getInstance();
 
-        gpio.removeAllListeners();
         unsubscribeAllListeners(gpio);
-        manualGpioPlans.forEach(plan -> {
+        registerManualGpioPlans(gpio);
+        registerTimeGpioPlans(gpio);
+        log.trace("Registering GPIO listeners: Finished");
+    }
+
+    private void registerManualGpioPlans(GpioController gpio) {
+        log.trace("Registering GPIO listeners: Manual");
+        planRepository.getEnabledManualGpioPlans().forEach(plan -> {
             final GpioPinDigitalInput gpioInput = gpio.provisionDigitalInputPin(plan.getAddress());
             gpioInput.setMode(PinMode.DIGITAL_INPUT);
             gpioInput.setShutdownOptions(true);
 
             gpioInput.addListener((GpioPinListenerDigital) event -> {
                 // display pin state on console
-                log.debug("Gpio state change: {} = {}", event.getPin(), event.getState());
+                log.debug("Gpio pin '{}' state change: {} = {}", gpioInput.getName(), event.getPin(), event.getState());
                 planRepository.setManualGpioPlanActiveState(plan.getId(), event.getState().isHigh());
             });
             subscribedListeners.add(gpioInput);
         });
-        log.trace("Registering GPIO listeners: Finished");
+    }
+
+    private void registerTimeGpioPlans(GpioController gpio) {
+        log.trace("Registering GPIO listeners: Time");
+        planRepository.getEnabledTimeGpioPlans().forEach(plan -> {
+            final GpioPinDigitalInput gpioInput = gpio.provisionDigitalInputPin(plan.getAddress());
+            gpioInput.setMode(PinMode.DIGITAL_INPUT);
+            gpioInput.setShutdownOptions(true);
+
+            gpioInput.addListener((GpioPinListenerDigital) event -> {
+                // display pin state on console
+                log.debug("Gpio pin '{}' state change: {} = {}", gpioInput.getName(), event.getPin(), event.getState());
+                planRepository.setTimeGpioPlanActualTime(plan.getId(), LocalDateTime.now());
+            });
+            subscribedListeners.add(gpioInput);
+        });
     }
 
     private void unsubscribeAllListeners(GpioController gpio) {
