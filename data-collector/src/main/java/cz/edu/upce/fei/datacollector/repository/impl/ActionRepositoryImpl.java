@@ -5,6 +5,7 @@ import cz.edu.upce.fei.datacollector.model.ActionOutput;
 import cz.edu.upce.fei.datacollector.model.OutputType;
 import cz.edu.upce.fei.datacollector.repository.ActionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ActionRepositoryImpl implements ActionRepository {
@@ -21,6 +23,8 @@ public class ActionRepositoryImpl implements ActionRepository {
 
     @Override
     public List<Action> findActionsByEventId(long eventId) {
+        log.trace("Fetching actions by event id: {}", eventId);
+
         String query = "SELECT id, name, address, output_type, value " +
                 "FROM action a INNER JOIN event_actions ea " +
                 "ON a.id = ea.action_id " +
@@ -44,11 +48,18 @@ public class ActionRepositoryImpl implements ActionRepository {
             return null;
         });
 
+        if (log.isTraceEnabled()) {
+            log.trace("Result: ");
+            actionList.forEach(action -> log.trace(String.valueOf(action)));
+        }
+
         return actionList;
     }
 
     @Override
     public List<ActionOutput> getAllOutputs() {
+        log.trace("Fetching all handled outputs");
+
         String query = "SELECT output_type, address FROM action GROUP BY output_type, address;";
 
         List<ActionOutput> actionOutputs = new ArrayList<>();
@@ -65,6 +76,11 @@ public class ActionRepositoryImpl implements ActionRepository {
             }
             return null;
         });
+
+        if (log.isTraceEnabled()) {
+            log.trace("Result: ");
+            actionOutputs.forEach(actionOutput -> log.trace(String.valueOf(actionOutput)));
+        }
 
         return actionOutputs;
     }

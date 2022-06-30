@@ -3,10 +3,12 @@ package cz.edu.upce.fei.datacollector.repository.impl;
 import cz.edu.upce.fei.datacollector.model.Sensor;
 import cz.edu.upce.fei.datacollector.repository.SensorRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SensorRepositoryImpl implements SensorRepository {
@@ -15,6 +17,7 @@ public class SensorRepositoryImpl implements SensorRepository {
 
     @Override
     public boolean sensorExists(long id) {
+        log.trace("Checking if sensor with id '{}' exists", id);
         Long res = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM sensor WHERE id = " + id
                 , Long.class);
@@ -23,6 +26,7 @@ public class SensorRepositoryImpl implements SensorRepository {
 
     @Override
     public void createSensor(Sensor sensor) {
+        log.trace("Creating new sensor: {}", sensor);
         String sql = "INSERT INTO sensor (id, name, device_id) VALUES (?,?,?)";
         jdbcTemplate.execute(sql, (PreparedStatementCallback<Sensor>) ps -> {
             ps.setLong(1, sensor.getId());
@@ -36,5 +40,6 @@ public class SensorRepositoryImpl implements SensorRepository {
             ps.execute();
             return sensor;
         });
+        log.trace("Finished");
     }
 }

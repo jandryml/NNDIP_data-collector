@@ -27,14 +27,14 @@ public class LimitPlanServiceImpl implements LimitPlanService {
 
     @Override
     public List<LimitPlan> getActiveLimitPlans() {
-        log.debug("Getting active limit plans.");
+        log.trace("Getting active limit plans from db.");
         List<LimitPlan> planList = planRepository.getEnabledLimitPlans();
         return evaluateActivePlans(planList);
     }
 
     @Override
     public List<LimitPlan> getActiveLimitPlansFromProvided(List<LimitPlan> limitPlans) {
-        log.debug("Getting active limit plans from provided limit plant list");
+        log.trace("Getting active limit plans from param (properties file).");
         return evaluateActivePlans(limitPlans);
     }
 
@@ -42,13 +42,13 @@ public class LimitPlanServiceImpl implements LimitPlanService {
         List<SensorData> sensorData = dataRepository.getLatestDataNoOlderThan(maxMinutesAgeOfDataAllowed);
 
         if (sensorData.isEmpty()) {
-            log.info("No data not older than {} minutes found!", maxMinutesAgeOfDataAllowed);
+            log.warn("No data not older than {} minutes found! Limit plans wont be activated!", maxMinutesAgeOfDataAllowed);
             return Collections.emptyList();
         } else {
             List<LimitPlan> limitPlans = providedLimitPlans.stream()
                     .filter(it -> isLimitPlanActive(it, sensorData))
                     .collect(Collectors.toList());
-            log.info("Found {} active plan(s).", limitPlans.size());
+            log.debug("Found {} active plan(s).", limitPlans.size());
             if (log.isDebugEnabled()) {
                 log.debug(limitPlans.stream().map(LimitPlan::toString).collect(Collectors.joining(",")));
             }
@@ -74,6 +74,7 @@ public class LimitPlanServiceImpl implements LimitPlanService {
             }
         }
 
+        log.trace("Plan {} is considered active: {}", limitPlan.getName(), isActive);
         limitPlan.setActive(isActive);
         planRepository.updateLimitPlan(limitPlan);
 
@@ -125,8 +126,8 @@ public class LimitPlanServiceImpl implements LimitPlanService {
     private void updateLimitPlan(LimitPlan limitPlan, Number value, boolean isActivated) {
         if (isActivated) {
             limitPlan.setLastTriggered(LocalDateTime.now());
-            log.info("{} has been activated.", limitPlan.getValueType().getPrettyName());
-            log.debug("Actual temperature: {}", value);
+            log.debug("{} has been activated.", limitPlan.getValueType().getPrettyName());
+            log.trace("Actual value: {}", value);
             if (log.isDebugEnabled()) {
                 log.debug(limitPlan.toString());
             }

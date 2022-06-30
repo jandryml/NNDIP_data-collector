@@ -11,6 +11,7 @@ import cz.edu.upce.fei.datacollector.repository.PlanRepository;
 import cz.edu.upce.fei.datacollector.service.LimitPlanService;
 import cz.edu.upce.fei.datacollector.service.PlanService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlanServiceImpl implements PlanService {
@@ -29,6 +31,7 @@ public class PlanServiceImpl implements PlanService {
 
     @Override
     public List<Plan> getAllActivePlans() {
+        log.trace("Getting all active plans from db");
         List<Plan> planList = new ArrayList<>();
         planList.addAll(getActiveManualPlan());
         planList.addAll(getActiveTimePlan());
@@ -36,6 +39,11 @@ public class PlanServiceImpl implements PlanService {
 
         planList.addAll(getActiveManualGpioPlan());
         planList.addAll(getActiveTimeGpioPlan());
+
+        if(log.isTraceEnabled()) {
+            log.trace("Result: ");
+            planList.forEach(plan -> log.trace(String.valueOf(plan)));
+        }
 
         return planList;
     }
@@ -81,17 +89,22 @@ public class PlanServiceImpl implements PlanService {
         LocalTime fromTime = timePlan.getFromTime();
         LocalTime toTime = timePlan.getToTime();
 
+        boolean isActive;
+
         // used when timePlan is spanning over midnight (e.g.: 23:00 - 1:00)
         if (fromTime.isAfter(toTime)) {
             // time before midnight (e.g.: 23:37)
             if (actual.toLocalTime().isAfter(fromTime)) {
-                 return true;
+                isActive=  true;
                 // time after midnight (e.g.: 00:37)
             } else {
-                return actual.toLocalTime().isBefore(toTime);
+                isActive = actual.toLocalTime().isBefore(toTime);
             }
         } else {
-            return fromTime.isBefore(actual.toLocalTime()) && toTime.isAfter(actual.toLocalTime());
+            isActive = fromTime.isBefore(actual.toLocalTime()) && toTime.isAfter(actual.toLocalTime());
         }
+
+        log.trace("Plan {} is considered active: {}", timePlan.getName(), isActive);
+        return isActive;
     }
 }

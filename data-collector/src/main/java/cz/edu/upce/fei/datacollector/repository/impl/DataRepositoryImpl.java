@@ -3,6 +3,7 @@ package cz.edu.upce.fei.datacollector.repository.impl;
 import cz.edu.upce.fei.datacollector.model.SensorData;
 import cz.edu.upce.fei.datacollector.repository.DataRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -14,6 +15,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataRepositoryImpl implements DataRepository {
@@ -22,6 +24,11 @@ public class DataRepositoryImpl implements DataRepository {
 
     @Override
     public void saveData(List<SensorData> sensorDataList) {
+        log.trace("Inserting new sensor data");
+        if (log.isTraceEnabled()) {
+            sensorDataList.forEach(sensorData -> log.trace(String.valueOf(sensorData)));
+        }
+
         String sql = "INSERT INTO data (sensor_id, data_timestamp, hits, temperature, humidity, co2)"
                 + " VALUES(?,?,?,?,?,?)";
 
@@ -42,10 +49,13 @@ public class DataRepositoryImpl implements DataRepository {
                 return sensorDataList.size();
             }
         });
+        log.trace("Finished");
     }
 
     @Override
     public List<SensorData> getLatestDataNoOlderThan(int minutes) {
+        log.trace("Getting sensor data not older than {}", minutes);
+
         String query = "SELECT d.id, d.hits, d.sensor_id, d.data_timestamp, d.co2, d.humidity, d.temperature\n" +
                 "FROM data d\n" +
                 "INNER JOIN (\n" +
@@ -74,6 +84,11 @@ public class DataRepositoryImpl implements DataRepository {
             }
             return null;
         });
+
+        if (log.isTraceEnabled()) {
+            resultList.forEach(sensorData -> log.trace(String.valueOf(sensorData)));
+        }
+
         return resultList;
     }
 }

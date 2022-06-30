@@ -14,6 +14,7 @@ import cz.edu.upce.fei.datacollector.model.plan.limit.YearPeriodType;
 import cz.edu.upce.fei.datacollector.repository.ActionRepository;
 import cz.edu.upce.fei.datacollector.repository.PlanRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PlanRepositoryImpl implements PlanRepository {
@@ -34,6 +36,8 @@ public class PlanRepositoryImpl implements PlanRepository {
 
     @Override
     public List<ManualGpioPlan> getEnabledManualGpioPlans() {
+        log.trace("Fetching all enabled manual gpio plans");
+
         String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, gp.pin_address, gp.default_state, mgp.active FROM plan p " +
                 "INNER JOIN gpio_plan gp ON p.id = gp.id " +
                 "INNER JOIN manual_gpio_plan mgp ON gp.id = mgp.id " +
@@ -64,24 +68,40 @@ public class PlanRepositoryImpl implements PlanRepository {
             }
             return null;
         });
+
+        if (log.isTraceEnabled()) {
+            log.trace("Result: ");
+            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
+        }
+
         return resultList;
     }
 
     @Override
     public void setManualGpioPlanActiveState(long planId, boolean isOn) {
+        log.trace("Setting manual gpio plan with id '{}' to active {}", planId, isOn);
+
         String query = "UPDATE manual_gpio_plan SET active = ? WHERE id = ?";
         jdbcTemplate.update(query, isOn, planId);
+
+        log.trace("Finished");
     }
 
     @Override
     public void setTimeGpioPlanActualTime(long planId, LocalDateTime localDateTime) {
+        log.trace("Setting trigger time '{}' to time gpio plan with id '{}'", localDateTime, planId);
+
         String query = "UPDATE time_gpio_plan SET last_triggered = ? WHERE id = ?";
         jdbcTemplate.update(query,
                 localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), planId);
+
+        log.trace("Finished");
     }
 
     @Override
     public List<TimeGpioPlan> getEnabledTimeGpioPlans() {
+        log.trace("Fetching all enabled time gpio plans");
+
         String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, gp.pin_address, gp.default_state, tgp.duration, tgp.last_triggered FROM plan p " +
                 "INNER JOIN gpio_plan gp ON p.id = gp.id " +
                 "INNER JOIN time_gpio_plan tgp ON gp.id = tgp.id " +
@@ -113,11 +133,19 @@ public class PlanRepositoryImpl implements PlanRepository {
             }
             return null;
         });
+
+        if (log.isTraceEnabled()) {
+            log.trace("Result: ");
+            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
+        }
+
         return resultList;
     }
 
     @Override
     public List<ManualPlan> getEnabledManualPlans() {
+        log.trace("Fetching all enabled manual plans");
+
         String query = "SELECT id, name, enabled, priority, event_id FROM plan " +
                 "WHERE plan_type = ? AND enabled";
 
@@ -144,11 +172,18 @@ public class PlanRepositoryImpl implements PlanRepository {
             return null;
         });
 
+        if (log.isTraceEnabled()) {
+            log.trace("Result: ");
+            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
+        }
+
         return resultList;
     }
 
     @Override
     public List<TimePlan> getEnabledTimePlans() {
+        log.trace("Fetching all enabled time plans");
+
         String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, tp.from_time, tp.to_time FROM plan p " +
                 "INNER JOIN time_plan tp ON p.id = tp.id " +
                 "WHERE p.plan_type = ? AND enabled";
@@ -178,11 +213,19 @@ public class PlanRepositoryImpl implements PlanRepository {
             return null;
         });
 
+        if (log.isTraceEnabled()) {
+            log.trace("Result: ");
+            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
+        }
+
         return resultList;
     }
 
     @Override
     public List<LimitPlan> getEnabledLimitPlans() {
+        log.trace("Fetching all enabled limit plans");
+
+
         String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, lp.value_type, lp.optimal_value, lp.threshold_value, yp.name as period_name, lp.active, lp.last_triggered FROM plan p " +
                 "INNER JOIN limit_plan lp ON p.id = lp.id " +
                 "INNER JOIN year_period yp ON lp.year_period_id = yp.id " +
@@ -217,16 +260,24 @@ public class PlanRepositoryImpl implements PlanRepository {
             return null;
         });
 
+        if (log.isTraceEnabled()) {
+            log.trace("Result: ");
+            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
+        }
+
         return resultList;
     }
 
     @Override
     public void updateLimitPlan(LimitPlan limitPlan) {
+        log.trace("Updating trigger time of limit plan {}", limitPlan);
+
         String sql = "UPDATE limit_plan SET active = ?, last_triggered = ? WHERE id = ?";
         jdbcTemplate.update(sql,
                 limitPlan.isActive(),
                 limitPlan.getLastTriggered().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                 limitPlan.getId()
         );
+        log.trace("Finished");
     }
 }

@@ -30,30 +30,39 @@ public class DataReactionServiceImpl implements DataReactionService {
     @Override
     @Scheduled(cron = "${planReactionPeriod}")
     public void resolvePlanResults() {
-        log.debug("Start plan analysis");
+        log.info("Resolving active plans outputs");
 
+        // creating map of handled outputs
         List<ActionOutput> actionOutputs = actionRepository.getAllOutputs();
         Map<ActionOutput, MapValue> resultMap = prepareEmptyResultMap(actionOutputs);
 
+        log.trace("Fetching all active plans from db and sort it by priority");
         List<Plan> planList = planService.getAllActivePlans();
         planList.sort(Comparator.comparing(Plan::getPriority));
 
+        log.trace("Filling output plan according to active plans");
         planList.forEach(plan ->
                 fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList()));
 
-        // filling with default Limit plans from application properties
+        log.trace("Filling with default Limit plans from application properties");
         planService.getActiveDefaultLimitPlan().forEach(plan ->
                 fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList()));
 
-        // filling missing values with default values from application properties
+        log.trace("Filling missing values with default values from application properties");
         fillMissingActionsToResultMap(resultMap, -1, defaultPlanConfig.getDefaultActions());
 
+        log.trace("Filling not filled outputs with 0 value");
         List<Action> resultActions = fillEmptyRecordsAndTransfer(resultMap);
+
+        if (log.isTraceEnabled()) {
+            log.trace("Printing result actions list that will be filled: ");
+            resultActions.forEach(action -> log.trace(String.valueOf(action)));
+        }
 
         // write to modbus/rPi
         commService.writeToExternalDevices(resultActions);
 
-        log.debug("End plan analysis");
+        log.trace("Resolving active plans outputs: Finished");
     }
 
     private void fillMissingActionsToResultMap(Map<ActionOutput, MapValue> resultMap, int priority, List<Action> actionList) {
@@ -65,7 +74,7 @@ public class DataReactionServiceImpl implements DataReactionService {
     }
 
     private ActionOutput transferAction(Action action) {
-        return new ActionOutput().outputType(action.getOutputType()).address(action.getAddress());
+        return new ActionOutput(action.getAddress(), action.getOutputType());
     }
 
     private Map<ActionOutput, MapValue> prepareEmptyResultMap(List<ActionOutput> actionOutputs) {
@@ -80,8 +89,8 @@ public class DataReactionServiceImpl implements DataReactionService {
         for (ActionOutput actionOutput : resultMap.keySet()) {
             Action action = new Action();
             action.setName("Generated zero value action");
-            action.setAddress(actionOutput.address());
-            action.setOutputType(actionOutput.outputType());
+            action.setAddress(actionOutput.getAddress());
+            action.setOutputType(actionOutput.getOutputType());
             action.setValue("0");
 
             resultMap.putIfAbsent(actionOutput, new MapValue(0, action));

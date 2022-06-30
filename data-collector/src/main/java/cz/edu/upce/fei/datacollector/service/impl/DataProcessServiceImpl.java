@@ -3,7 +3,6 @@ package cz.edu.upce.fei.datacollector.service.impl;
 import cz.edu.upce.fei.datacollector.model.SensorData;
 import cz.edu.upce.fei.datacollector.repository.DataRepository;
 import cz.edu.upce.fei.datacollector.service.DataProcessService;
-import cz.edu.upce.fei.datacollector.service.DataReactionService;
 import cz.edu.upce.fei.datacollector.service.SensorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,6 @@ public class DataProcessServiceImpl implements DataProcessService {
 
     private final DataRepository dataRepository;
     private final SensorService sensorService;
-    private final DataReactionService reactionService;
 
     private final List<String> dataBuffer = Collections.synchronizedList(new ArrayList<>());
 
@@ -45,6 +43,7 @@ public class DataProcessServiceImpl implements DataProcessService {
         dataBuffer.add(message);
     }
 
+    @Override
     public List<SensorData> processData() {
         log.info("Start of data processing.");
 
@@ -54,16 +53,16 @@ public class DataProcessServiceImpl implements DataProcessService {
 
         List<SensorData> resultData = sumUpData(sensorDataMap);
 
-        log.info("Result of data processing:");
+        log.debug("Result of data processing:");
         for (SensorData sensorData : resultData) {
-            log.info("{}", sensorData);
+            log.debug("{}", sensorData);
         }
-        log.info("Data processing ended.");
+        log.debug("Data processing ended.");
         return resultData;
     }
 
     private void normalizeData(Map<Long, List<SensorData>> sensorDataMap) {
-        log.debug("Start of data normalising");
+        log.trace("Start of data normalising");
 
         synchronized (dataBuffer) {
             dataBuffer.forEach(it -> {
@@ -82,7 +81,7 @@ public class DataProcessServiceImpl implements DataProcessService {
             dataBuffer.clear();
         }
 
-        log.debug("Data normalised.");
+        log.trace("Data normalised.");
     }
 
     private SensorData transferRawMessageToData(String[] strings, long sensorId) {
@@ -98,7 +97,7 @@ public class DataProcessServiceImpl implements DataProcessService {
     }
 
     private List<SensorData> sumUpData(Map<Long, List<SensorData>> sensorDataMap) {
-        log.debug("Start of data summarising");
+        log.trace("Start of data summarising");
 
         List<SensorData> resultData = new ArrayList<>();
         sensorDataMap.forEach((key, value) -> {
@@ -121,7 +120,7 @@ public class DataProcessServiceImpl implements DataProcessService {
                     .co2(avgCo2.isPresent() ? formatNumber(avgCo2.getAsDouble()).intValue() : null)
                     .build());
         });
-        log.debug("Data summarising ended.");
+        log.trace("Data summarising ended.");
         return resultData;
     }
 

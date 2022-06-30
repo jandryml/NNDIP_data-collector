@@ -26,10 +26,10 @@ public class CommServiceImpl implements CommService {
 
     @Override
     public void writeToExternalDevices(List<Action> valuesList) {
-        log.trace("Writing to external devices");
+        log.trace("Writing result actions list to external devices");
         Map<ActionOutput, String> actualAddressState = getActualAddressState();
         valuesList.forEach(action -> {
-            ActionOutput actionOutput = new ActionOutput().outputType(action.getOutputType()).address(action.getAddress());
+            ActionOutput actionOutput = new ActionOutput(action.getAddress(), action.getOutputType());
             if (!Objects.equals(actualAddressState.get(actionOutput), action.getValue())) {
                 log.debug("Change in registers detected type '{}' address '{}': Previous value '{}', new value '{}'",
                         action.getOutputType(), action.getAddress(), actualAddressState.get(actionOutput), action.getValue());
@@ -64,7 +64,7 @@ public class CommServiceImpl implements CommService {
     private Map<ActionOutput, String> getActualAddressState() {
         return addressStateRepository.getAllAddressStates().stream()
                 .collect(Collectors.toMap(
-                        value -> new ActionOutput().address(value.getAddress()).outputType(value.getOutputType()),
+                        value -> new ActionOutput(value.getAddress(), value.getOutputType()),
                         Action::getValue));
     }
 

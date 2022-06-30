@@ -27,6 +27,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     @Override
     public void writeValue(Action action) {
         log.trace("Writing value to GPIO");
+        log.trace("{}", action);
         try {
             if (action.getOutputType().equals(OutputType.RASPBERRY_PIN)) {
                 final GpioController gpioController = GpioFactory.getInstance();
@@ -73,6 +74,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     private void registerManualGpioPlans(GpioController gpio) {
         log.trace("Registering GPIO listeners: Manual");
         planRepository.getEnabledManualGpioPlans().forEach(plan -> {
+            log.trace("Registering: {}",  plan);
             final GpioPinDigitalInput gpioInput = gpio.provisionDigitalInputPin(plan.getAddress());
             gpioInput.setMode(PinMode.DIGITAL_INPUT);
             gpioInput.setShutdownOptions(true);
@@ -89,6 +91,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     private void registerTimeGpioPlans(GpioController gpio) {
         log.trace("Registering GPIO listeners: Time");
         planRepository.getEnabledTimeGpioPlans().forEach(plan -> {
+            log.trace("Registering: {}",  plan);
             final GpioPinDigitalInput gpioInput = gpio.provisionDigitalInputPin(plan.getAddress());
             gpioInput.setMode(PinMode.DIGITAL_INPUT);
             gpioInput.setShutdownOptions(true);
@@ -103,6 +106,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     }
 
     private void unsubscribeAllListeners(GpioController gpio) {
+        log.trace("Unsubscribing all GPIO listeners");
         subscribedListeners.forEach(gpio::unprovisionPin);
         subscribedListeners.clear();
     }
