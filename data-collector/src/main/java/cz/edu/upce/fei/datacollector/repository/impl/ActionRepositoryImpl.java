@@ -49,7 +49,7 @@ public class ActionRepositoryImpl implements ActionRepository {
 
     @Override
     public List<ActionOutput> getAllOutputs() {
-        String query = "select output_type, address from action group by output_type, address;";
+        String query = "SELECT output_type, address FROM action GROUP BY output_type, address;";
 
         List<ActionOutput> actionOutputs = new ArrayList<>();
 
@@ -58,9 +58,9 @@ public class ActionRepositoryImpl implements ActionRepository {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                actionOutputs.add(new ActionOutput()
-                        .address(rs.getString("address"))
-                        .outputType(OutputType.valueOf(rs.getString("output_type")))
+                actionOutputs.add(new ActionOutput(
+                        rs.getString("address"),
+                        OutputType.valueOf(rs.getString("output_type")))
                 );
             }
             return null;

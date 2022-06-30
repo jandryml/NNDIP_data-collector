@@ -15,7 +15,6 @@ import javax.annotation.PreDestroy;
 import java.util.HashSet;
 import java.util.Set;
 
-
 @Slf4j
 @EnableAsync
 @Component
@@ -29,6 +28,7 @@ public class ConnectionHandlerTask {
     @PreDestroy
     public void preDestroy() {
         log.info("Trying to clear Connection service");
+        // TODO consider this
 //        for (handledPorts)
 //            handledPort.removeDataListener();
 //            handledPort.close();
@@ -48,8 +48,7 @@ public class ConnectionHandlerTask {
                 continue;
             }
 
-            log.info(String.format("New connection found (%s)! Connecting on: %s\n"
-                    , port.getDescriptivePortName(), port.getPortLocation()));
+            log.info("New connection found {}! Connecting on: {}", port.getDescriptivePortName(), port.getPortLocation());
 
             port.openPort();
             registerPortListener(port);
@@ -71,7 +70,7 @@ public class ConnectionHandlerTask {
                     port.readBytes(newData, newData.length);
                     dataProcessService.addData(newData);
                 } else if (event.getEventType() == SerialPort.LISTENING_EVENT_PORT_DISCONNECTED) {
-                    log.info("Disconnected port: " + port.getPortLocation());
+                    log.info("Disconnected port: {}", port.getPortLocation());
                     handledPorts.remove(port.getPortLocation());
                     port.closePort();
                 }

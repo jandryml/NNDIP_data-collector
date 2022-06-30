@@ -9,7 +9,6 @@ import com.pi4j.io.gpio.PinState;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public abstract class GpioPlan extends Plan {
-    // TODO change for pi4j implementation
     protected Pin address;
     protected PinState defaultState;
 }

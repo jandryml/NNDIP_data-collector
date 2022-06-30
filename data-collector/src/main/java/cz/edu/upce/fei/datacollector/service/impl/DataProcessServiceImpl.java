@@ -36,8 +36,6 @@ public class DataProcessServiceImpl implements DataProcessService {
         sensorService.validateSensorsExistOrCreate(processedData);
 
         dataRepository.saveData(processedData);
-
-//        reactionService.handleData(processedData);
     }
 
     @Override

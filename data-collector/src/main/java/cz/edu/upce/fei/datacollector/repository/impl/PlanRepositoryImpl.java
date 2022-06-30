@@ -37,7 +37,7 @@ public class PlanRepositoryImpl implements PlanRepository {
         String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, gp.pin_address, gp.default_state, mgp.active FROM plan p " +
                 "INNER JOIN gpio_plan gp ON p.id = gp.id " +
                 "INNER JOIN manual_gpio_plan mgp ON gp.id = mgp.id " +
-                "where p.plan_type = ? and enabled";
+                "WHERE p.plan_type = ? AND enabled";
 
         List<ManualGpioPlan> resultList = new ArrayList<>();
 
@@ -85,7 +85,7 @@ public class PlanRepositoryImpl implements PlanRepository {
         String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, gp.pin_address, gp.default_state, tgp.duration, tgp.last_triggered FROM plan p " +
                 "INNER JOIN gpio_plan gp ON p.id = gp.id " +
                 "INNER JOIN time_gpio_plan tgp ON gp.id = tgp.id " +
-                "where p.plan_type = ? and enabled";
+                "WHERE p.plan_type = ? AND enabled";
 
         List<TimeGpioPlan> resultList = new ArrayList<>();
 
@@ -119,7 +119,7 @@ public class PlanRepositoryImpl implements PlanRepository {
     @Override
     public List<ManualPlan> getEnabledManualPlans() {
         String query = "SELECT id, name, enabled, priority, event_id FROM plan " +
-                "where plan_type = ? and enabled";
+                "WHERE plan_type = ? AND enabled";
 
         List<ManualPlan> resultList = new ArrayList<>();
 
@@ -151,7 +151,7 @@ public class PlanRepositoryImpl implements PlanRepository {
     public List<TimePlan> getEnabledTimePlans() {
         String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, tp.from_time, tp.to_time FROM plan p " +
                 "INNER JOIN time_plan tp ON p.id = tp.id " +
-                "where p.plan_type = ? and enabled";
+                "WHERE p.plan_type = ? AND enabled";
 
         List<TimePlan> resultList = new ArrayList<>();
 
@@ -186,7 +186,7 @@ public class PlanRepositoryImpl implements PlanRepository {
         String query = "SELECT p.id, p.name, p.enabled, p.priority, p.event_id, lp.value_type, lp.optimal_value, lp.threshold_value, yp.name as period_name, lp.active, lp.last_triggered FROM plan p " +
                 "INNER JOIN limit_plan lp ON p.id = lp.id " +
                 "INNER JOIN year_period yp ON lp.year_period_id = yp.id " +
-                "where p.plan_type = ? and p.enabled and yp.active";
+                "WHERE p.plan_type = ? AND p.enabled AND yp.active";
 
         List<LimitPlan> resultList = new ArrayList<>();
 

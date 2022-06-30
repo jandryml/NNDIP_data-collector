@@ -1,10 +1,12 @@
 package cz.edu.upce.fei.datacollector.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 
 @Data
-@Accessors(fluent = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class ActionOutput {
     private String address;
     private OutputType outputType;

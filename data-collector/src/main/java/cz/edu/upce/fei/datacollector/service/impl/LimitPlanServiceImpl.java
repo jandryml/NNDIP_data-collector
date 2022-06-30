@@ -22,7 +22,6 @@ public class LimitPlanServiceImpl implements LimitPlanService {
     private final DataRepository dataRepository;
     private final PlanRepository planRepository;
 
-    // TODO take minutes from properties file
     @Value("${limitPlan.dataFetching.maxAgeInMinutes:5}")
     private int maxMinutesAgeOfDataAllowed;
 
