@@ -27,28 +27,32 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     @Override
     public void writeValue(Action action) {
         log.trace("Writing value to GPIO");
-        if (action.getOutputType().equals(OutputType.RASPBERRY_PIN)) {
-            final GpioController gpioController = GpioFactory.getInstance();
+        try {
+            if (action.getOutputType().equals(OutputType.RASPBERRY_PIN)) {
+                final GpioController gpioController = GpioFactory.getInstance();
 
-            Pin raspiPin = RaspiPin.getPinByAddress(Integer.parseInt(action.getAddress()));
-            GpioPinDigitalMultipurpose gpioPin = gpioController.provisionDigitalMultipurposePin(
-                    raspiPin, PinMode.DIGITAL_OUTPUT);
+                Pin raspiPin = RaspiPin.getPinByAddress(Integer.parseInt(action.getAddress()));
+                GpioPinDigitalMultipurpose gpioPin = gpioController.provisionDigitalMultipurposePin(
+                        raspiPin, PinMode.DIGITAL_OUTPUT);
 
-            // Sets it as an Output pin.
-            gpioPin.setMode(PinMode.DIGITAL_OUTPUT);
+                // Sets it as an Output pin.
+                gpioPin.setMode(PinMode.DIGITAL_OUTPUT);
 
-            boolean setHigh = Integer.parseInt(action.getValue()) != 0;
-            log.debug("Gpio output: Setting {} to {} ", setHigh, raspiPin.getName());
-            if (setHigh) {
-                // Sets the state to "high".
-                gpioPin.high();
+                boolean setHigh = Integer.parseInt(action.getValue()) != 0;
+                log.debug("Gpio output: Setting {} to {} ", setHigh, raspiPin.getName());
+                if (setHigh) {
+                    // Sets the state to "high".
+                    gpioPin.high();
+                } else {
+                    // Sets the state to "low".
+                    gpioPin.low();
+                }
+
             } else {
-                // Sets the state to "low".
-                gpioPin.low();
+                log.error("Invalid output type {}", action.getOutputType());
             }
-
-        } else {
-            log.error("Invalid output type {}", action.getOutputType());
+        } catch (Exception e) {
+            log.error("Error during writing to rPi pin: {}", e.getMessage());
         }
         log.trace("Writing value to GPIO: Finished");
     }

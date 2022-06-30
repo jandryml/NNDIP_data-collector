@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -14,6 +15,6 @@ import java.util.List;
 @Configuration
 @ConfigurationProperties(prefix = "reaction")
 public class DefaultPlanConfig {
-    private List<Action> defaultActions;
-    private List<LimitPlan> defaultLimitPlans;
+    private List<Action> defaultActions = new ArrayList<>();
+    private List<LimitPlan> defaultLimitPlans = new ArrayList<>();
 }
