@@ -49,6 +49,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
                     gpioPin.low();
                 }
 
+                gpioController.unprovisionPin(gpioPin);
             } else {
                 log.error("Invalid output type {}", action.getOutputType());
             }
