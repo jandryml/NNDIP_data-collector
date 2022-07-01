@@ -62,7 +62,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     @Override
     @Scheduled(cron = "${refreshGpioListenersPeriod}")
     public void registerListeners() {
-        log.trace("Registering GPIO listeners");
+        log.debug("Registering GPIO listeners");
 
         final GpioController gpio = GpioFactory.getInstance();
 

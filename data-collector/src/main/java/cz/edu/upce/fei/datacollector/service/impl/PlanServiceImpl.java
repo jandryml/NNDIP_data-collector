@@ -104,7 +104,7 @@ public class PlanServiceImpl implements PlanService {
             isActive = fromTime.isBefore(actual.toLocalTime()) && toTime.isAfter(actual.toLocalTime());
         }
 
-        log.trace("Plan {} is considered active: {}", timePlan.getName(), isActive);
+        log.debug("Plan {} is considered active: {}", timePlan.getName(), isActive);
         return isActive;
     }
 }

@@ -44,10 +44,7 @@ public class AddressStateRepositoryImpl implements AddressStateRepository {
             }
             return null;
         });
-        if (log.isTraceEnabled()) {
-            log.trace("Result: ");
-            actionList.forEach(action -> log.trace(String.valueOf(action)));
-        }
+        log.trace("Finished: ");
 
         return actionList;
     }

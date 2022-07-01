@@ -47,11 +47,7 @@ public class ActionRepositoryImpl implements ActionRepository {
             }
             return null;
         });
-
-        if (log.isTraceEnabled()) {
-            log.trace("Result: ");
-            actionList.forEach(action -> log.trace(String.valueOf(action)));
-        }
+        log.trace("Finished: ");
 
         return actionList;
     }
@@ -76,12 +72,7 @@ public class ActionRepositoryImpl implements ActionRepository {
             }
             return null;
         });
-
-        if (log.isTraceEnabled()) {
-            log.trace("Result: ");
-            actionOutputs.forEach(actionOutput -> log.trace(String.valueOf(actionOutput)));
-        }
-
+        log.trace("Finished: ");
         return actionOutputs;
     }
 }

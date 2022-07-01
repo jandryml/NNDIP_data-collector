@@ -84,10 +84,7 @@ public class DataRepositoryImpl implements DataRepository {
             }
             return null;
         });
-
-        if (log.isTraceEnabled()) {
-            resultList.forEach(sensorData -> log.trace(String.valueOf(sensorData)));
-        }
+        log.trace("Finished: ");
 
         return resultList;
     }

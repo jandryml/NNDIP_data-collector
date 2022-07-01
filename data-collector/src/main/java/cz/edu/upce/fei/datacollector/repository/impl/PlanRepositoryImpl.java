@@ -68,11 +68,7 @@ public class PlanRepositoryImpl implements PlanRepository {
             }
             return null;
         });
-
-        if (log.isTraceEnabled()) {
-            log.trace("Result: ");
-            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
-        }
+        log.trace("Finished");
 
         return resultList;
     }
@@ -133,11 +129,7 @@ public class PlanRepositoryImpl implements PlanRepository {
             }
             return null;
         });
-
-        if (log.isTraceEnabled()) {
-            log.trace("Result: ");
-            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
-        }
+        log.trace("Finished");
 
         return resultList;
     }
@@ -171,11 +163,7 @@ public class PlanRepositoryImpl implements PlanRepository {
             }
             return null;
         });
-
-        if (log.isTraceEnabled()) {
-            log.trace("Result: ");
-            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
-        }
+        log.trace("Finished");
 
         return resultList;
     }
@@ -212,11 +200,7 @@ public class PlanRepositoryImpl implements PlanRepository {
             }
             return null;
         });
-
-        if (log.isTraceEnabled()) {
-            log.trace("Result: ");
-            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
-        }
+        log.trace("Finished");
 
         return resultList;
     }
@@ -259,11 +243,7 @@ public class PlanRepositoryImpl implements PlanRepository {
             }
             return null;
         });
-
-        if (log.isTraceEnabled()) {
-            log.trace("Result: ");
-            resultList.forEach(plan -> log.trace(String.valueOf(plan)));
-        }
+        log.trace("Finished");
 
         return resultList;
     }
