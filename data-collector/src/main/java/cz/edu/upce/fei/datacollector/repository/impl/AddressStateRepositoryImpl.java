@@ -3,6 +3,7 @@ package cz.edu.upce.fei.datacollector.repository.impl;
 import cz.edu.upce.fei.datacollector.model.Action;
 import cz.edu.upce.fei.datacollector.model.OutputType;
 import cz.edu.upce.fei.datacollector.repository.AddressStateRepository;
+import cz.edu.upce.fei.datacollector.service.impl.DataReactionServiceImpl.VerboseAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -52,23 +53,25 @@ public class AddressStateRepositoryImpl implements AddressStateRepository {
     }
 
     @Override
-    public void setAddressStates(List<Action> actionList) {
+    public void setAddressStates(List<VerboseAction> actionList) {
         log.trace("Inserting new handled outputs state");
         if (log.isTraceEnabled()) {
             actionList.forEach(action -> log.trace(String.valueOf(action)));
         }
 
-        String sql = "INSERT INTO address_state (address, output_type, value) VALUES (?,?,?)";
+        String sql = "INSERT INTO address_state (address, output_type, value, action_name, plan_name) VALUES (?,?,?,?,?)";
 
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
             @Override
             public void setValues(PreparedStatement ps, int i)
                     throws SQLException {
-                Action action = actionList.get(i);
-                ps.setString(1, action.getAddress());
-                ps.setString(2, action.getOutputType().name());
-                ps.setString(3, action.getValue());
+                VerboseAction verboseAction = actionList.get(i);
+                ps.setString(1, verboseAction.getAction().getAddress());
+                ps.setString(2, verboseAction.getAction().getOutputType().name());
+                ps.setString(3, verboseAction.getAction().getValue());
+                ps.setString(4, verboseAction.getAction().getName());
+                ps.setString(5, verboseAction.getPlanName());
             }
 
             @Override

@@ -15,7 +15,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -34,7 +33,7 @@ public class DataReactionServiceImpl implements DataReactionService {
 
         // creating map of handled outputs
         List<ActionOutput> actionOutputs = actionRepository.getAllOutputs();
-        Map<ActionOutput, MapValue> resultMap = prepareEmptyResultMap(actionOutputs);
+        Map<ActionOutput, VerboseAction> resultMap = prepareEmptyResultMap(actionOutputs);
 
         log.trace("Fetching all active plans from db and sort it by priority");
         List<Plan> planList = planService.getAllActivePlans();
@@ -42,17 +41,17 @@ public class DataReactionServiceImpl implements DataReactionService {
 
         log.trace("Filling output plan according to active plans");
         planList.forEach(plan ->
-                fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList()));
+                fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList(), plan.getName()));
 
         log.trace("Filling with default Limit plans from application properties");
         planService.getActiveDefaultLimitPlan().forEach(plan ->
-                fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList()));
+                fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList(), plan.getName()));
 
         log.trace("Filling missing values with default values from application properties");
-        fillMissingActionsToResultMap(resultMap, -1, defaultPlanConfig.getDefaultActions());
+        fillMissingActionsToResultMap(resultMap, -1, defaultPlanConfig.getDefaultActions(), "Default actions from properties file");
 
         log.trace("Filling not filled outputs with 0 value");
-        List<Action> resultActions = fillEmptyRecordsAndTransfer(resultMap);
+        List<VerboseAction> resultActions = fillEmptyRecordsAndTransfer(resultMap);
 
         if (log.isTraceEnabled()) {
             log.trace("Printing result actions list that will be filled: ");
@@ -65,11 +64,11 @@ public class DataReactionServiceImpl implements DataReactionService {
         log.trace("Resolving active plans outputs: Finished");
     }
 
-    private void fillMissingActionsToResultMap(Map<ActionOutput, MapValue> resultMap, int priority, List<Action> actionList) {
+    private void fillMissingActionsToResultMap(Map<ActionOutput, VerboseAction> resultMap, int priority, List<Action> actionList, String planName) {
         actionList.forEach(action ->
                 resultMap.putIfAbsent(
                         transferAction(action),
-                        new MapValue(priority, action))
+                        new VerboseAction(priority, action,planName))
         );
     }
 
@@ -77,15 +76,15 @@ public class DataReactionServiceImpl implements DataReactionService {
         return new ActionOutput(action.getAddress(), action.getOutputType());
     }
 
-    private Map<ActionOutput, MapValue> prepareEmptyResultMap(List<ActionOutput> actionOutputs) {
-        Map<ActionOutput, MapValue> resultMap = new HashMap<>();
+    private Map<ActionOutput, VerboseAction> prepareEmptyResultMap(List<ActionOutput> actionOutputs) {
+        Map<ActionOutput, VerboseAction> resultMap = new HashMap<>();
         for (ActionOutput actionOutput : actionOutputs) {
             resultMap.put(actionOutput, null);
         }
         return resultMap;
     }
 
-    private List<Action> fillEmptyRecordsAndTransfer(Map<ActionOutput, MapValue> resultMap) {
+    private List<VerboseAction> fillEmptyRecordsAndTransfer(Map<ActionOutput, VerboseAction> resultMap) {
         for (ActionOutput actionOutput : resultMap.keySet()) {
             Action action = new Action();
             action.setName("Generated zero value action");
@@ -93,15 +92,16 @@ public class DataReactionServiceImpl implements DataReactionService {
             action.setOutputType(actionOutput.getOutputType());
             action.setValue("0");
 
-            resultMap.putIfAbsent(actionOutput, new MapValue(0, action));
+            resultMap.putIfAbsent(actionOutput, new VerboseAction(0, action, "Default 0 values"));
         }
-        return resultMap.values().stream().map(MapValue::getAction).collect(Collectors.toList());
+        return new ArrayList<>(resultMap.values());
     }
 
     @Getter
     @RequiredArgsConstructor
-    private class MapValue {
+    public class VerboseAction {
         private final int priority;
         private final Action action;
+        private final String planName;
     }
 }

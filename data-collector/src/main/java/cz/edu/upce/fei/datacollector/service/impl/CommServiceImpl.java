@@ -6,6 +6,7 @@ import cz.edu.upce.fei.datacollector.repository.AddressStateRepository;
 import cz.edu.upce.fei.datacollector.service.CommService;
 import cz.edu.upce.fei.datacollector.service.communication.ModbusCommService;
 import cz.edu.upce.fei.datacollector.service.communication.RaspberryPiCommService;
+import cz.edu.upce.fei.datacollector.service.impl.DataReactionServiceImpl.VerboseAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,15 +26,18 @@ public class CommServiceImpl implements CommService {
     private final AddressStateRepository addressStateRepository;
 
     @Override
-    public void writeToExternalDevices(List<Action> valuesList) {
-        log.trace("Writing result actions list to external devices");
+    public void writeToExternalDevices(List<VerboseAction> valuesList) {
+        log.debug("Writing result actions list to external devices");
         Map<ActionOutput, String> actualAddressState = getActualAddressState();
-        valuesList.forEach(action -> {
-            ActionOutput actionOutput = new ActionOutput(action.getAddress(), action.getOutputType());
-            if (!Objects.equals(actualAddressState.get(actionOutput), action.getValue())) {
+        valuesList.forEach(verboseAction -> {
+            ActionOutput actionOutput = new ActionOutput(verboseAction.getAction().getAddress(), verboseAction.getAction().getOutputType());
+            if (!Objects.equals(actualAddressState.get(actionOutput), verboseAction.getAction().getValue())) {
+
                 log.debug("Change in registers detected type '{}' address '{}': Previous value '{}', new value '{}'",
-                        action.getOutputType(), action.getAddress(), actualAddressState.get(actionOutput), action.getValue());
-                writeAction(action);
+                        verboseAction.getAction().getOutputType(), verboseAction.getAction().getAddress(),
+                        actualAddressState.get(actionOutput), verboseAction.getAction().getValue());
+
+                writeAction(verboseAction.getAction());
             }
         });
 
@@ -68,7 +72,7 @@ public class CommServiceImpl implements CommService {
                         Action::getValue));
     }
 
-    private void writeToRegisters(List<Action> resultActions) {
+    private void writeToRegisters(List<VerboseAction> resultActions) {
         addressStateRepository.removeAllAddressStates();
         addressStateRepository.setAddressStates(resultActions);
     }

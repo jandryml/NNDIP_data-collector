@@ -1,10 +1,10 @@
 package cz.edu.upce.fei.datacollector.service;
 
-import cz.edu.upce.fei.datacollector.model.Action;
+import cz.edu.upce.fei.datacollector.service.impl.DataReactionServiceImpl.VerboseAction;
 
 import java.util.List;
 
 public interface CommService {
 
-    void writeToExternalDevices(List<Action> valuesList);
+    void writeToExternalDevices(List<VerboseAction> valuesList);
 }
