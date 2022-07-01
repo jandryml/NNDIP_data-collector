@@ -37,7 +37,7 @@ public class DataReactionServiceImpl implements DataReactionService {
 
         log.trace("Fetching all active plans from db and sort it by priority");
         List<Plan> planList = planService.getAllActivePlans();
-        planList.sort(Comparator.comparing(Plan::getPriority));
+        planList.sort(Comparator.comparing(Plan::getPriority).reversed());
 
         log.trace("Filling output plan according to active plans");
         planList.forEach(plan ->
