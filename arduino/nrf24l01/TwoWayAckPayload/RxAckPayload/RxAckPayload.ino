@@ -2,9 +2,8 @@
 
 // Configured for node with id 1
 // Make adjustments on those lines: 
-// #define deviceID 1 
+// #define sensorId 1 
 // const byte address[6] = {'0','0','0','0','1'};
-//         if(message == 1) {
 
 
 // knihovny pro nrf24l01
@@ -27,17 +26,21 @@
 // nastavení datoveho pinu pro AM2120 - Teplomer
 #define pinDHT  5
 
-#define deviceID 1 // mente dle potreby, je pouzivano jako id zarizeni
+// !! Config start - CHANGE ONLY HERE !!
+#define sensorId 1 // mente dle potreby, je pouzivano jako id zarizeni
+const byte address[6] = {'0','0','0','0','1'};   // Address of this node
+// !! CONFIG END !!
+
 
 // nastaveni komunikace
 //================
 RF24 radio(CE_PIN, CSN_PIN); // nRF24L01 (CE,CSN)
 
-const byte address[6] = {'0','0','0','0','1'};   // Address of this node
-int message; // this must match dataToSend in the TX
+int message;
 bool newData = false;
-int ackData[2] = {1, -1}; // the two values to be sent to the master
+
 struct {
+  int id;
   float teplota;
   float vlhkost;
   int co2ppm;
@@ -80,7 +83,7 @@ void setup() {
     radio.enableAckPayload();
     radio.startListening();
     
-    radio.writeAckPayload(1, &ackData, sizeof(ackData)); // pre-load data
+    radio.writeAckPayload(1, &dataStruct, sizeof(dataStruct)); // pre-load data
 }
 
 //================
@@ -96,7 +99,7 @@ void loop() {
 void getData() {
     if ( radio.available() ) {
         radio.read( &message, sizeof(message) );
-        if(message == 1) {
+        if(message == sensorId) {
            Serial.println("Corr");
       
         updateReplyData();
@@ -163,7 +166,10 @@ void showData() {
 
 //================
 void printSensorData() {
-  Serial.print(" Send data:");
+  Serial.println(" Send data:");
+  Serial.print("id:");
+  Serial.print(dataStruct.id);
+  Serial.print("; teplota:");
   Serial.print(dataStruct.teplota);
   Serial.print("; vhlkost: ");
   Serial.print(dataStruct.vlhkost);
@@ -178,6 +184,7 @@ void printSensorData() {
 
 //================
 void cleanData() {
+  dataStruct.id = sensorId;
   dataStruct.teplota = 0.0f;
   dataStruct.vlhkost = 0.0f;
   dataStruct.co2ppm = 0;

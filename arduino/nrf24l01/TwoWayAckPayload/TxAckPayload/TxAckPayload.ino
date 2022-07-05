@@ -15,6 +15,7 @@ int slaveId = 0;
 bool newData = false;
 
 struct {
+  int id;
   float teplota;
   float vlhkost;
   int co2ppm;
@@ -125,7 +126,9 @@ String handleThatShit() {
 void showData() {
     if (newData == true) {
        // (float)(AM2120 - teplota); (float)(AM2120 - vlhost); (int)(MH-Z19 - UART - CO2); (int)(MH-Z19 - PWM - CO2); (int)(MH-Z19 - teplota);
-      String message = "1;";
+      String message = "";
+      message.concat(dataStruct.id);
+      message.concat(";");
       message.concat(handleThisShit());
       message.concat(handleThatShit());
       Serial.println(message);
