@@ -1,9 +1,11 @@
 package cz.edu.upce.fei.datacollector.service.communication.impl;
 
 import com.pi4j.io.gpio.*;
+import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import cz.edu.upce.fei.datacollector.model.Action;
 import cz.edu.upce.fei.datacollector.model.OutputType;
+import cz.edu.upce.fei.datacollector.model.plan.gpio.GpioPlan;
 import cz.edu.upce.fei.datacollector.repository.PlanRepository;
 import cz.edu.upce.fei.datacollector.service.communication.RaspberryPiCommService;
 import lombok.RequiredArgsConstructor;
@@ -83,7 +85,9 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
             gpioInput.addListener((GpioPinListenerDigital) event -> {
                 // display pin state on console
                 log.debug("Gpio pin '{}' state change: {} = {}", gpioInput.getName(), event.getPin(), event.getState());
-                planRepository.setManualGpioPlanActiveState(plan.getId(), event.getState().isHigh());
+                if (isGpioPlanTriggered(plan, event)) {
+                    planRepository.setManualGpioPlanActiveState(plan.getId(), event.getState().isHigh());
+                }
             });
             subscribedListeners.add(gpioInput);
         });
@@ -100,10 +104,17 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
             gpioInput.addListener((GpioPinListenerDigital) event -> {
                 // display pin state on console
                 log.debug("Gpio pin '{}' state change: {} = {}", gpioInput.getName(), event.getPin(), event.getState());
-                planRepository.setTimeGpioPlanActualTime(plan.getId(), LocalDateTime.now());
+                if (isGpioPlanTriggered(plan, event)) {
+                    planRepository.setTimeGpioPlanActualTime(plan.getId(), LocalDateTime.now());
+                }
             });
             subscribedListeners.add(gpioInput);
         });
+    }
+
+    private boolean isGpioPlanTriggered(GpioPlan plan, GpioPinDigitalStateChangeEvent event) {
+        // when event state differs from plan default state -> plan is triggered
+        return !event.getState().equals(plan.getDefaultState());
     }
 
     private void unsubscribeAllListeners(GpioController gpio) {
