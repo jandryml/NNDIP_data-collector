@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -81,9 +83,12 @@ public class DataRepositoryImpl implements DataRepository {
                         .sensorId(rs.getLong("sensor_id"))
                         .timestamp(rs.getTimestamp("data_timestamp"))
                         .hits(rs.getInt("hits"))
-                        .temperature(rs.getDouble("temperature"))
-                        .humidity(rs.getDouble("humidity"))
-                        .co2(rs.getInt("co2"))
+                        .temperature(Optional.ofNullable(rs.getBigDecimal("temperature"))
+                                .map(BigDecimal::doubleValue).orElse(null))
+                        .humidity(Optional.ofNullable(rs.getBigDecimal("humidity"))
+                                .map(BigDecimal::doubleValue).orElse(null))
+                        .co2(Optional.ofNullable(rs.getBigDecimal("co2"))
+                                .map(BigDecimal::intValue).orElse(null))
                         .build());
             }
             return null;

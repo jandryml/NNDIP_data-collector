@@ -11,7 +11,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -81,8 +84,11 @@ public class LimitPlanServiceImpl implements LimitPlanService {
         return isActive;
     }
 
-    private boolean resolveHighTemperaturePlanStatus(LimitPlan limitPlan, List<SensorData> sensorData) {
-        OptionalDouble temperature = sensorData.stream().mapToDouble(SensorData::getTemperature).max();
+    private boolean resolveHighTemperaturePlanStatus(LimitPlan limitPlan, List<SensorData> sensorDataList) {
+        OptionalDouble temperature = sensorDataList.stream()
+                .filter(sensorData -> sensorData.getTemperature() != null)
+                .mapToDouble(SensorData::getTemperature)
+                .max();
         if (temperature.isPresent()) {
             if (limitPlan.isActive()) {
                 return limitPlan.getOptimalValue() < temperature.getAsDouble();
@@ -95,8 +101,12 @@ public class LimitPlanServiceImpl implements LimitPlanService {
         return false;
     }
 
-    private boolean resolveLowTemperaturePlanStatus(LimitPlan limitPlan, List<SensorData> sensorData) {
-        OptionalDouble temperature = sensorData.stream().mapToDouble(SensorData::getTemperature).min();
+    private boolean resolveLowTemperaturePlanStatus(LimitPlan limitPlan, List<SensorData> sensorDataList) {
+        OptionalDouble temperature = sensorDataList.stream()
+                .filter(sensorData -> sensorData.getTemperature() != null)
+                .mapToDouble(SensorData::getTemperature)
+                .min();
+
         if (temperature.isPresent()) {
             if (limitPlan.isActive()) {
                 return limitPlan.getOptimalValue() > temperature.getAsDouble();
@@ -109,8 +119,12 @@ public class LimitPlanServiceImpl implements LimitPlanService {
         return false;
     }
 
-    private boolean resolveCo2PlanStatus(LimitPlan limitPlan, List<SensorData> sensorData) {
-        OptionalInt co2 = sensorData.stream().mapToInt(SensorData::getCo2).max();
+    private boolean resolveCo2PlanStatus(LimitPlan limitPlan, List<SensorData> sensorDataList) {
+        OptionalInt co2 = sensorDataList.stream()
+                .filter(sensorData -> sensorData.getCo2() != null)
+                .mapToInt(SensorData::getCo2)
+                .max();
+
         if (co2.isPresent()) {
             if (limitPlan.isActive()) {
                 return limitPlan.getOptimalValue() < co2.getAsInt();
