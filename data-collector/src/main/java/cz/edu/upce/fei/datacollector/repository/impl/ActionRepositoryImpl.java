@@ -47,7 +47,7 @@ public class ActionRepositoryImpl implements ActionRepository {
             }
             return null;
         });
-        log.trace("Finished: ");
+        log.trace("Finished");
 
         return actionList;
     }
@@ -72,7 +72,35 @@ public class ActionRepositoryImpl implements ActionRepository {
             }
             return null;
         });
-        log.trace("Finished: ");
+        log.trace("Finished");
         return actionOutputs;
+    }
+
+    @Override
+    public List<Action> getAllDefaultActions() {
+        log.trace("Fetching all default actions");
+
+        String query = "SELECT id, name, address, output_type, value FROM action WHERE is_default";
+
+        List<Action> actionList = new ArrayList<>();
+
+        jdbcTemplate.execute(query, (PreparedStatementCallback<Action>) ps -> {
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Action action = new Action();
+                action.setId(rs.getLong("id"));
+                action.setName(rs.getString("name"));
+                action.setAddress(rs.getString("address"));
+                action.setOutputType(OutputType.valueOf(rs.getString("output_type")));
+                action.setValue(rs.getString("value"));
+                actionList.add(action);
+            }
+            return null;
+        });
+        log.trace("Finished");
+
+        return actionList;
     }
 }

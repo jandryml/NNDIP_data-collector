@@ -10,4 +10,6 @@ public interface ActionRepository {
     List<Action> findActionsByEventId(long eventId);
 
     List<ActionOutput> getAllOutputs();
+
+    List<Action> getAllDefaultActions();
 }

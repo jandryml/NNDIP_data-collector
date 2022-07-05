@@ -68,7 +68,7 @@ public class DataReactionServiceImpl implements DataReactionService {
         actionList.forEach(action ->
                 resultMap.putIfAbsent(
                         transferAction(action),
-                        new VerboseAction(priority, action,planName))
+                        new VerboseAction(priority, action, planName))
         );
     }
 
@@ -85,6 +85,13 @@ public class DataReactionServiceImpl implements DataReactionService {
     }
 
     private List<VerboseAction> fillEmptyRecordsAndTransfer(Map<ActionOutput, VerboseAction> resultMap) {
+        List<Action> defaultActions = actionRepository.getAllDefaultActions();
+
+        defaultActions.forEach(action -> {
+            ActionOutput actionOutput = new ActionOutput(action.getAddress(), action.getOutputType());
+            resultMap.putIfAbsent(actionOutput, new VerboseAction(-2, action, "Default action"));
+        });
+
         for (ActionOutput actionOutput : resultMap.keySet()) {
             Action action = new Action();
             action.setName("Generated zero value action");
@@ -92,7 +99,7 @@ public class DataReactionServiceImpl implements DataReactionService {
             action.setOutputType(actionOutput.getOutputType());
             action.setValue("0");
 
-            resultMap.putIfAbsent(actionOutput, new VerboseAction(0, action, "Default 0 values"));
+            resultMap.putIfAbsent(actionOutput, new VerboseAction(-2, action, "Default 0 values"));
         }
         return new ArrayList<>(resultMap.values());
     }

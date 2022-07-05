@@ -84,7 +84,7 @@ public class DataRepositoryImpl implements DataRepository {
             }
             return null;
         });
-        log.trace("Finished: ");
+        log.trace("Finished");
 
         return resultList;
     }
