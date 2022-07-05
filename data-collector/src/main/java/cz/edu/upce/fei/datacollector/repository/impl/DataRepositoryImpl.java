@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,14 +63,16 @@ public class DataRepositoryImpl implements DataRepository {
                 "INNER JOIN (\n" +
                 "  SELECT sensor_id, max(data_timestamp) AS latest_date\n" +
                 "  FROM data\n" +
-                "  WHERE data_timestamp > DATE_SUB(NOW(),INTERVAL ? MINUTE)\n" +
+                "  WHERE data_timestamp > ? \n" +
                 "  GROUP BY sensor_id\n" +
                 "  ) gd ON gd.sensor_id = d.sensor_id AND gd.latest_date = d.data_timestamp;";
 
         List<SensorData> resultList = new ArrayList<>();
 
         jdbcTemplate.execute(query, (PreparedStatementCallback<SensorData>) ps -> {
-            ps.setInt(1, minutes);
+            String timeLimit = LocalDateTime.now().minusMinutes(minutes)
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            ps.setString(1, timeLimit);
 
             ResultSet rs = ps.executeQuery();
 
