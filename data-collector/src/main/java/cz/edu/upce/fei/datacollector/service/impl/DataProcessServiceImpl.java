@@ -39,7 +39,7 @@ public class DataProcessServiceImpl implements DataProcessService {
     @Override
     public void addData(byte[] rawMessage) {
         String message = new String(rawMessage);
-        // log.debug("Data received: {}", message);
+        log.trace("Data received:\n{}", message);
         dataBuffer.add(message);
     }
 

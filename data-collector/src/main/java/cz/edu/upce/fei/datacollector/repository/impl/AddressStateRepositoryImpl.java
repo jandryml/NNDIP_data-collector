@@ -52,9 +52,6 @@ public class AddressStateRepositoryImpl implements AddressStateRepository {
     @Override
     public void setAddressStates(List<VerboseAction> actionList) {
         log.trace("Inserting new handled outputs state");
-        if (log.isTraceEnabled()) {
-            actionList.forEach(action -> log.trace(String.valueOf(action)));
-        }
 
         String sql = "INSERT INTO address_state (address, output_type, value, action_name, plan_name) VALUES (?,?,?,?,?)";
 
