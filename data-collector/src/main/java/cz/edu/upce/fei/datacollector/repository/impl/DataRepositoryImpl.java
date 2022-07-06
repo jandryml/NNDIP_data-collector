@@ -97,4 +97,16 @@ public class DataRepositoryImpl implements DataRepository {
 
         return resultList;
     }
+
+    @Override
+    public void deleteDataOlderThan(LocalDateTime retentionLimit) {
+
+        String sql = "DELETE FROM data WHERE data_timestamp < ?";
+
+        String timeLimit = retentionLimit
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        jdbcTemplate.update(sql, timeLimit);
+
+    }
 }

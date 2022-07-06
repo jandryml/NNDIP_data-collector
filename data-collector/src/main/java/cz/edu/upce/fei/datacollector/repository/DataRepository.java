@@ -2,6 +2,7 @@ package cz.edu.upce.fei.datacollector.repository;
 
 import cz.edu.upce.fei.datacollector.model.SensorData;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface DataRepository {
@@ -9,4 +10,6 @@ public interface DataRepository {
     void saveData(List<SensorData> data);
 
     List<SensorData> getLatestDataNoOlderThan(int minutes);
+
+    void deleteDataOlderThan(LocalDateTime retentionLimit);
 }
