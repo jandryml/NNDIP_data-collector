@@ -77,7 +77,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     private void registerManualGpioPlans(GpioController gpio) {
         log.trace("Registering GPIO listeners: Manual");
         planRepository.getEnabledManualGpioPlans().forEach(plan -> {
-            log.trace("Registering: {}",  plan);
+            log.trace("Registering: {}", plan);
             final GpioPinDigitalInput gpioInput = gpio.provisionDigitalInputPin(plan.getAddress());
             gpioInput.setMode(PinMode.DIGITAL_INPUT);
             gpioInput.setShutdownOptions(true);
@@ -85,9 +85,9 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
             gpioInput.addListener((GpioPinListenerDigital) event -> {
                 // display pin state on console
                 log.debug("Gpio pin '{}' state change: {} = {}", gpioInput.getName(), event.getPin(), event.getState());
-                if (isGpioPlanTriggered(plan, event)) {
-                    planRepository.setManualGpioPlanActiveState(plan.getId(), event.getState().isHigh());
-                }
+
+                // when event state differs from plan default state -> plan is triggered
+                planRepository.setManualGpioPlanActiveState(plan.getId(), !event.getState().equals(plan.getDefaultState()));
             });
             subscribedListeners.add(gpioInput);
         });
@@ -96,7 +96,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     private void registerTimeGpioPlans(GpioController gpio) {
         log.trace("Registering GPIO listeners: Time");
         planRepository.getEnabledTimeGpioPlans().forEach(plan -> {
-            log.trace("Registering: {}",  plan);
+            log.trace("Registering: {}", plan);
             final GpioPinDigitalInput gpioInput = gpio.provisionDigitalInputPin(plan.getAddress());
             gpioInput.setMode(PinMode.DIGITAL_INPUT);
             gpioInput.setShutdownOptions(true);
@@ -104,7 +104,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
             gpioInput.addListener((GpioPinListenerDigital) event -> {
                 // display pin state on console
                 log.debug("Gpio pin '{}' state change: {} = {}", gpioInput.getName(), event.getPin(), event.getState());
-                if (isGpioPlanTriggered(plan, event)) {
+                if (isTimeGpioPlanTriggered(plan, event)) {
                     planRepository.setTimeGpioPlanActualTime(plan.getId(), LocalDateTime.now());
                 }
             });
@@ -112,7 +112,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
         });
     }
 
-    private boolean isGpioPlanTriggered(GpioPlan plan, GpioPinDigitalStateChangeEvent event) {
+    private boolean isTimeGpioPlanTriggered(GpioPlan plan, GpioPinDigitalStateChangeEvent event) {
         // when event state differs from plan default state -> plan is triggered
         return !event.getState().equals(plan.getDefaultState());
     }
