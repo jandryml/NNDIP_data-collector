@@ -11,6 +11,16 @@ RF24 radio(CE_PIN, CSN_PIN);      // nRF24L01 (CE,CSN)
 const byte firstNode [5] = {'0','0','0','0','1'};
 const byte secondNode [5] = {'0','0','0','0','2'};
 
+const byte numSlaves = 5;
+const byte slaveAddress[numSlaves][5] = {
+                            {'0','0','0','0','1'},
+                            {'0','0','0','0','2'},
+                            {'0','0','0','0','3'},
+                            {'0','0','0','0','4'},
+                            {'0','0','0','0','5'}
+                        };
+
+
 int slaveId = 0;
 bool newData = false;
 
@@ -48,11 +58,11 @@ void loop() {
 radio.openWritingPipe(secondNode);
     currentMillis = millis();
     if (currentMillis - prevMillis >= txIntervalMillis) {
-        updateMessage(1);
-        send(firstNode);
-        delay(100);
-        updateMessage(2);
-        send(secondNode);
+      for (byte n = 0; n < numSlaves; n++){
+        updateMessage(n + 1);
+        send(slaveAddress[n]);
+        delay(300);
+      }
     }
 }
 
@@ -64,8 +74,7 @@ void send(byte address []) {
     rslt = radio.write( &slaveId, sizeof(slaveId) );
         // Always use sizeof() as it gives the size as the number of bytes.
         // For example if dataToSend was an int sizeof() would correctly return 2
-
-    // Serial.print("Data Sent ");
+    // Serial.print("Data Sent: ");
     // Serial.print(slaveId);
     // Serial.println();
     if (rslt) {
