@@ -20,7 +20,7 @@ public class RetentionTask {
 
     private final DataRepository dataRepository;
 
-    @Scheduled(cron = "${connectionHandlingTask}")
+    @Scheduled(cron = "${dataRetentionInvokePeriod}")
     public void sensorDataRetention() {
         LocalDateTime retentionLimit = LocalDateTime.now().minusDays(sensorDataRetentionDays);
         log.info("Removing sensor data older than {} days", sensorDataRetentionDays);
