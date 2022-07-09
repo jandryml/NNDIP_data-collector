@@ -1,8 +1,10 @@
 package cz.edu.upce.fei.datacollector.service.impl;
 
+import cz.edu.upce.fei.datacollector.config.ActionExclusionConfig;
 import cz.edu.upce.fei.datacollector.config.DefaultPlanConfig;
 import cz.edu.upce.fei.datacollector.model.Action;
 import cz.edu.upce.fei.datacollector.model.ActionOutput;
+import cz.edu.upce.fei.datacollector.model.ExclusionRule;
 import cz.edu.upce.fei.datacollector.model.plan.Plan;
 import cz.edu.upce.fei.datacollector.repository.ActionRepository;
 import cz.edu.upce.fei.datacollector.service.CommService;
@@ -25,6 +27,7 @@ public class DataReactionServiceImpl implements DataReactionService {
     private final ActionRepository actionRepository;
     private final CommService commService;
     private final DefaultPlanConfig defaultPlanConfig;
+    private final ActionExclusionConfig actionExclusionConfig;
 
     @Override
     @Scheduled(cron = "${planReactionPeriod}")
@@ -65,11 +68,36 @@ public class DataReactionServiceImpl implements DataReactionService {
     }
 
     private void fillMissingActionsToResultMap(Map<ActionOutput, VerboseAction> resultMap, int priority, List<Action> actionList, String planName) {
-        actionList.forEach(action ->
-                resultMap.putIfAbsent(
-                        transferAction(action),
-                        new VerboseAction(priority, action, planName))
+        actionList.forEach(action -> {
+                    resolveActionExclusion(resultMap, action);
+
+                    resultMap.putIfAbsent(
+                            transferAction(action),
+                            new VerboseAction(priority, action, planName));
+                }
         );
+    }
+
+    private void resolveActionExclusion(Map<ActionOutput, VerboseAction> resultMap, Action actualAction) {
+        for (ExclusionRule exclusionRule : actionExclusionConfig.getActionExclusionRules()) {
+            ActionOutput exclusionActionOutput = new ActionOutput(exclusionRule.getAddress(), exclusionRule.getOutputType());
+            VerboseAction actualVerboseActionInMap = resultMap.get(exclusionActionOutput);
+
+            if (actualVerboseActionInMap == null) {
+                continue;
+            }
+
+            String actualValueInMap = actualVerboseActionInMap.action.getValue();
+
+            if (Objects.equals(actualValueInMap, exclusionRule.getValue())) {
+                for (String higherPrioValues : exclusionRule.getHigherPrioValues()) {
+                    if (Objects.equals(actualAction.getValue(), higherPrioValues)){
+                        resultMap.remove(exclusionActionOutput);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     private ActionOutput transferAction(Action action) {
