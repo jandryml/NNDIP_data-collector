@@ -11,11 +11,11 @@ public interface ModbusCommService {
      * Writes value to coil of configured Modbus client.
      * All necessary data (address and value) are derived from provided action param.
      */
-    void writeToCoil(Action action);
+    boolean writeToCoil(Action action);
 
     /**
      * Writes value to register of configured Modbus client.
      * All necessary data (address and value) are derived from provided action param.
      */
-    void writeToRegister(Action action);
+    boolean writeToRegister(Action action);
 }

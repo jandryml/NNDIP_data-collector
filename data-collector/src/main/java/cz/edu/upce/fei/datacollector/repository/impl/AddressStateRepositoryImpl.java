@@ -1,6 +1,7 @@
 package cz.edu.upce.fei.datacollector.repository.impl;
 
 import cz.edu.upce.fei.datacollector.model.Action;
+import cz.edu.upce.fei.datacollector.model.ActionOutput;
 import cz.edu.upce.fei.datacollector.model.OutputType;
 import cz.edu.upce.fei.datacollector.repository.AddressStateRepository;
 import cz.edu.upce.fei.datacollector.service.impl.DataReactionServiceImpl.VerboseAction;
@@ -50,37 +51,27 @@ public class AddressStateRepositoryImpl implements AddressStateRepository {
     }
 
     @Override
-    public void setAddressStates(List<VerboseAction> actionList) {
-        log.trace("Inserting new handled outputs state");
-
+    public void setAddressState(VerboseAction verboseAction) {
         String sql = "INSERT INTO address_state (address, output_type, value, action_name, plan_name) VALUES (?,?,?,?,?)";
 
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+        jdbcTemplate.execute(sql, (PreparedStatementCallback<Action>) ps -> {
+            ps.setString(1, verboseAction.getAction().getAddress());
+            ps.setString(2, verboseAction.getAction().getOutputType().name());
+            ps.setString(3, verboseAction.getAction().getValue());
+            ps.setString(4, verboseAction.getAction().getName());
+            ps.setString(5, verboseAction.getPlanName());
 
-            @Override
-            public void setValues(PreparedStatement ps, int i)
-                    throws SQLException {
-                VerboseAction verboseAction = actionList.get(i);
-                ps.setString(1, verboseAction.getAction().getAddress());
-                ps.setString(2, verboseAction.getAction().getOutputType().name());
-                ps.setString(3, verboseAction.getAction().getValue());
-                ps.setString(4, verboseAction.getAction().getName());
-                ps.setString(5, verboseAction.getPlanName());
-            }
-
-            @Override
-            public int getBatchSize() {
-                return actionList.size();
-            }
+            ps.execute();
+            return null;
         });
         log.trace("Finished");
     }
 
     @Override
-    public void removeAllAddressStates() {
-        log.trace("Removing all actual handled outputs state");
-        String sql = "DELETE FROM address_state";
-        jdbcTemplate.update(sql);
+    public void removeAddressStateById(ActionOutput actionOutput) {
+        log.trace("Removing handled output state by id {}", actionOutput);
+        String sql = "DELETE FROM address_state WHERE address = ? AND output_type = ?";
+        jdbcTemplate.update(sql, actionOutput.getAddress(), actionOutput.getOutputType());
         log.trace("Finished");
     }
 }

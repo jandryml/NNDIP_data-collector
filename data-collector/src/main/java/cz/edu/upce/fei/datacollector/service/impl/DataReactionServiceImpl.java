@@ -12,6 +12,7 @@ import cz.edu.upce.fei.datacollector.service.DataReactionService;
 import cz.edu.upce.fei.datacollector.service.PlanService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -46,9 +47,6 @@ public class DataReactionServiceImpl implements DataReactionService {
         planList.forEach(plan ->
                 fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList(), plan.getName()));
 
-        log.trace("Filling with default Limit plans from application properties");
-        planService.getActiveDefaultLimitPlan().forEach(plan ->
-                fillMissingActionsToResultMap(resultMap, plan.getPriority(), plan.getActionList(), plan.getName()));
 
         log.trace("Filling missing values with default values from application properties");
         fillMissingActionsToResultMap(resultMap, -1, defaultPlanConfig.getDefaultActions(), "Default actions from properties file");
@@ -133,6 +131,7 @@ public class DataReactionServiceImpl implements DataReactionService {
     }
 
     @Getter
+    @ToString
     @RequiredArgsConstructor
     public class VerboseAction {
         private final int priority;

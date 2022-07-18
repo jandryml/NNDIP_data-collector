@@ -14,7 +14,7 @@ public interface RaspberryPiCommService {
      *
      * Changes the GPIO pin to OUTPUT mode.
      */
-    void writeValue(Action action);
+    boolean writeValue(Action action);
 
     /**
      * Removes all present GPIO listeners

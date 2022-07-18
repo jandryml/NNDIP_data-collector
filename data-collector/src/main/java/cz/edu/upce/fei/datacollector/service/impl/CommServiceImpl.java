@@ -31,38 +31,40 @@ public class CommServiceImpl implements CommService {
         Map<ActionOutput, String> actualAddressState = getActualAddressState();
         valuesList.forEach(verboseAction -> {
             ActionOutput actionOutput = new ActionOutput(verboseAction.getAction().getAddress(), verboseAction.getAction().getOutputType());
+            // write only when there is a change in registers
             if (!Objects.equals(actualAddressState.get(actionOutput), verboseAction.getAction().getValue())) {
 
                 log.debug("Change in registers detected type '{}' address '{}': Previous value '{}', new value '{}'",
                         verboseAction.getAction().getOutputType(), verboseAction.getAction().getAddress(),
                         actualAddressState.get(actionOutput), verboseAction.getAction().getValue());
 
-                writeAction(verboseAction.getAction());
+                // TODO catch errors
+                if(writeAction(verboseAction.getAction())) {
+                    writeToRegisters(verboseAction);
+                } else {
+                    log.error("Write to external device for {} was unsuccessful!", verboseAction.getAction());
+                }
             }
         });
-
-        // write to registers
-        log.trace("Writing register state to database");
-        writeToRegisters(valuesList);
-        log.trace("Writing to external devices: Finished");
     }
 
-    private void writeAction(Action action) {
+    private boolean writeAction(Action action) {
+        boolean result = false;
         switch (action.getOutputType()) {
-
             case MODBUS_VALUE: {
-                modbusCommService.writeToRegister(action);
+                result = modbusCommService.writeToRegister(action);
                 break;
             }
             case MODBUS_BOOLEAN: {
-                modbusCommService.writeToCoil(action);
+                result = modbusCommService.writeToCoil(action);
                 break;
             }
             case RASPBERRY_PIN: {
-                rPiCommService.writeValue(action);
+                result = rPiCommService.writeValue(action);
                 break;
             }
         }
+        return result;
     }
 
     private Map<ActionOutput, String> getActualAddressState() {
@@ -72,8 +74,9 @@ public class CommServiceImpl implements CommService {
                         Action::getValue));
     }
 
-    private void writeToRegisters(List<VerboseAction> resultActions) {
-        addressStateRepository.removeAllAddressStates();
-        addressStateRepository.setAddressStates(resultActions);
+    private void writeToRegisters(VerboseAction verboseAction) {
+        ActionOutput actionOutput = new ActionOutput(verboseAction.getAction().getAddress(), verboseAction.getAction().getOutputType());
+        addressStateRepository.removeAddressStateById(actionOutput);
+        addressStateRepository.setAddressState(verboseAction);
     }
 }

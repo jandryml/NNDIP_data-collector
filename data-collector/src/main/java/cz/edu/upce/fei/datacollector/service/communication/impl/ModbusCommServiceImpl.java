@@ -23,10 +23,12 @@ public class ModbusCommServiceImpl implements ModbusCommService {
     private byte targetId;
 
     @Override
-    public void writeToCoil(Action action) {
+    public boolean writeToCoil(Action action) {
         log.trace("Writing to Modbus coil");
+        boolean result = false;
         try {
             String comPort = getComPort();
+            log.trace("Connecting to modbus client");
             ModbusClient modbusClient = connectModbusClient(comPort);
 
             log.debug("Sending data to: " + comPort);
@@ -37,17 +39,21 @@ public class ModbusCommServiceImpl implements ModbusCommService {
                     comPort, targetId, action.getAddress(), action.getValue());
 
             modbusClient.Disconnect();
+            result = true;
         } catch (Exception e) {
             log.error("Error during writing to modbus: {}", e.getMessage());
         }
         log.trace("Writing to Modbus coil: finished");
+        return result;
     }
 
     @Override
-    public void writeToRegister(Action action) {
+    public boolean writeToRegister(Action action) {
         log.trace("Writing to Modbus register");
+        boolean result = false;
         try {
             String comPort = getComPort();
+            log.trace("Connecting to modbus client");
             ModbusClient modbusClient = connectModbusClient(comPort);
 
             log.debug("Sending data to: " + comPort);
@@ -58,10 +64,12 @@ public class ModbusCommServiceImpl implements ModbusCommService {
                     comPort, targetId, action.getAddress(), action.getValue());
 
             modbusClient.Disconnect();
+            result = true;
         } catch (Exception e) {
             log.error("Error during writing to modbus: {}", e.getMessage());
         }
         log.trace("Writing to Modbus register: Finished");
+        return result;
     }
 
     private ModbusClient connectModbusClient(String comPort) throws Exception {

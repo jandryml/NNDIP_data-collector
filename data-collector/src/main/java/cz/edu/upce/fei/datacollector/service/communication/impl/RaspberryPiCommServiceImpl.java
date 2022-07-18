@@ -27,9 +27,10 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
     private final List<GpioPin> subscribedListeners = new ArrayList<>();
 
     @Override
-    public void writeValue(Action action) {
+    public boolean writeValue(Action action) {
         log.trace("Writing value to GPIO");
         log.trace("{}", action);
+        boolean result = false;
         try {
             if (action.getOutputType().equals(OutputType.RASPBERRY_PIN)) {
                 final GpioController gpioController = GpioFactory.getInstance();
@@ -50,6 +51,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
                     // Sets the state to "low".
                     gpioPin.low();
                 }
+                result = true;
 
                 gpioController.unprovisionPin(gpioPin);
             } else {
@@ -59,6 +61,7 @@ public class RaspberryPiCommServiceImpl implements RaspberryPiCommService {
             log.error("Error during writing to rPi pin: {}", e.getMessage());
         }
         log.trace("Writing value to GPIO: Finished");
+        return result;
     }
 
     @Override
