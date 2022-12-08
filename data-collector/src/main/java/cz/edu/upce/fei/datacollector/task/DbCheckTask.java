@@ -2,8 +2,8 @@ package cz.edu.upce.fei.datacollector.task;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.health.Status;
-import org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -12,11 +12,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DbCheckTask {
 
-	private final DataSourceHealthIndicator healthIndicator;
+	private final HealthIndicator healthIndicator;
 
-	@Scheduled(fixedRate = 10000L)
+	@Scheduled(fixedRateString = "${db.status.checkRate:60000}")
 	public void checkDBHealth() {
-		final Status status = this.healthIndicator.health().getStatus();
+		final Status status = healthIndicator.health().getStatus();
+		log.trace("Checking db state.");
 		if (!Status.UP.equals(status)) {
 			log.error("DATABASE IS OFFLINE! SHUTTING DOWN!");
 			System.exit(1);

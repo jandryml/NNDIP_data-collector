@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'cz.edu.upce.fei'
-version = '1.0.1'
+version = '1.0.2'
 sourceCompatibility = '1.8'
 
 repositories {
