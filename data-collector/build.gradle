@@ -25,6 +25,7 @@ dependencies {
 //    implementation 'com.pi4j:pi4j-plugin-raspberrypi:2.0'
 //    implementation 'com.pi4j:pi4j-plugin-pigpio:2.0'
     implementation 'org.springframework.boot:spring-boot-starter:2.6.2'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:2.6.2'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc:2.6.2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.2'
 
